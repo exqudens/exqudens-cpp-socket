@@ -132,6 +132,10 @@ if(${SKIP_CMAKE_TEST})
     set(TARGET_CMAKE_INSTALL_DEPENDS_ON "${PROJECT_NAME}")
 endif()
 
+if("msvc-16-x64" IN_LIST "PRESET_NAME_ELEMENTS")
+    set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
+endif()
+
 set_conan_architecture(CONAN_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 set_conan_compiler(CONAN_COMPILER "${CMAKE_CXX_COMPILER_ID}")
 set_conan_compiler_version(CONAN_COMPILER_VERSION "${CMAKE_CXX_COMPILER_ID}" "${CMAKE_CXX_COMPILER_VERSION}")
@@ -240,17 +244,17 @@ if("${INTERFACE_ONLY}")
         "#  define EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES inline\n"
         "#endif /* EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES */\n"
     )
-    file(WRITE "${PROJECT_BINARY_DIR}/generated/src/main/cpp/exqudens/socket/export.hpp"
-        "#ifndef EXQUDENS_THREADS_EXPORT_H\n"
-        "#define EXQUDENS_THREADS_EXPORT_H\n"
+    file(WRITE "${PROJECT_BINARY_DIR}/generated/src/main/cpp/exqudens/socket_export.hpp"
+        "#ifndef EXQUDENS_SOCKET_EXPORT_H\n"
+        "#define EXQUDENS_SOCKET_EXPORT_H\n"
         "\n"
-        "#ifndef EXQUDENS_THREADS_EXPORT\n"
-        "#  define EXQUDENS_THREADS_EXPORT\n"
-        "#endif /* EXQUDENS_THREADS_EXPORT */\n"
+        "#ifndef EXQUDENS_SOCKET_EXPORT\n"
+        "#  define EXQUDENS_SOCKET_EXPORT\n"
+        "#endif /* EXQUDENS_SOCKET_EXPORT */\n"
         "\n"
         "${EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES_CONTENT}"
         "\n"
-        "#endif /* EXQUDENS_THREADS_EXPORT_H */\n"
+        "#endif /* EXQUDENS_SOCKET_EXPORT_H */\n"
     )
     target_include_directories("${PROJECT_NAME}" INTERFACE
         "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/generated/src/main/cpp>"
@@ -258,8 +262,8 @@ if("${INTERFACE_ONLY}")
     )
 else()
     add_library("${PROJECT_NAME}"
-        "src/main/cpp/exqudens/socket/Server.hpp"
-        "src/main/cpp/exqudens/socket/Server.cpp"
+        "src/main/cpp/exqudens/SocketServer.hpp"
+        "src/main/cpp/exqudens/WindowsSocketServer.cpp"
     )
     string(CONCAT EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES_CONTENT
         "#ifndef EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES\n"
@@ -267,12 +271,12 @@ else()
         "#endif /* EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES */\n"
     )
     generate_export_header("${PROJECT_NAME}"
-        BASE_NAME "EXQUDENS_THREADS"
-        EXPORT_FILE_NAME "generated/src/main/cpp/exqudens/socket/export.hpp"
+        BASE_NAME "EXQUDENS_SOCKET"
+        EXPORT_FILE_NAME "generated/src/main/cpp/exqudens/socket_export.hpp"
         CUSTOM_CONTENT_FROM_VARIABLE "EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES_CONTENT"
     )
     if(NOT "${BUILD_SHARED_LIBS}")
-        set_target_properties("${PROJECT_NAME}" PROPERTIES COMPILE_FLAGS -DEXQUDENS_THREADS_STATIC_DEFINE)
+        set_target_properties("${PROJECT_NAME}" PROPERTIES COMPILE_FLAGS -DEXQUDENS_SOCKET_STATIC_DEFINE)
     endif()
     target_include_directories("${PROJECT_NAME}" PUBLIC
         "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/generated/src/main/cpp>"
@@ -355,8 +359,10 @@ endif()
 add_library("test-lib" STATIC
     "src/test/cpp/TestApplication.hpp"
     "src/test/cpp/TestApplication.cpp"
+    "src/test/cpp/TestThreadPool.hpp"
+    "src/test/cpp/TestThreadPool.cpp"
     #"src/test/cpp/TestUtils.hpp"
-    #"src/test/cpp/exqudens/socket/Tests.hpp"
+    "src/test/cpp/exqudens/Tests.hpp"
 )
 target_include_directories("test-lib" PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/test/cpp>"
