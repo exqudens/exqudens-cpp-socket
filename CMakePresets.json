@@ -1,0 +1,243 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "cacheVariables": {
+        "PRESET_NAME": {
+          "type": "STRING",
+          "value": "${presetName}"
+        }
+      }
+    },
+    {
+      "name": "windows",
+      "hidden": true,
+      "cmakeExecutable": "cmake.exe"
+    },
+    {
+      "name": "ninja",
+      "hidden": true,
+      "generator": "Ninja"
+    },
+    {
+      "name": "msvc-16-x64",
+      "hidden": true,
+      "toolset": {
+        "strategy": "external",
+        "value": "x64"
+      },
+      "architecture": {
+        "strategy": "external",
+        "value": "x64"
+      },
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "../common/msvc-16-x64-toolchain.cmake"
+        }
+      }
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Release"
+        }
+      }
+    },
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Debug"
+        }
+      }
+    },
+    {
+      "name": "interface",
+      "hidden": true,
+      "cacheVariables": {
+        "INTERFACE_ONLY": {
+          "type": "BOOL",
+          "value": true
+        },
+        "BUILD_SHARED_LIBS": {
+          "type": "BOOL",
+          "value": false
+        }
+      }
+    },
+    {
+      "name": "static",
+      "hidden": true,
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS": {
+          "type": "BOOL",
+          "value": false
+        }
+      }
+    },
+    {
+      "name": "shared",
+      "hidden": true,
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS": {
+          "type": "BOOL",
+          "value": true
+        }
+      }
+    },
+    {
+      "name": "mt",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_MSVC_RUNTIME_LIBRARY": {
+          "type": "STRING",
+          "value": "MultiThreaded"
+        }
+      }
+    },
+    {
+      "name": "md",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_MSVC_RUNTIME_LIBRARY": {
+          "type": "STRING",
+          "value": "MultiThreadedDLL"
+        }
+      }
+    },
+    {
+      "name": "mtd",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_MSVC_RUNTIME_LIBRARY": {
+          "type": "STRING",
+          "value": "MultiThreadedDebug"
+        }
+      }
+    },
+    {
+      "name": "mdd",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_MSVC_RUNTIME_LIBRARY": {
+          "type": "STRING",
+          "value": "MultiThreadedDebugDLL"
+        }
+      }
+    },
+
+    {
+      "name": "windows.ninja.msvc-16-x64.interface",
+      "inherits": [ "default", "windows", "ninja", "msvc-16-x64", "interface", "mtd" ],
+      "binaryDir": "${sourceDir}/build/0"
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.shared",
+      "inherits": [ "default", "windows", "ninja", "msvc-16-x64", "debug", "shared", "mdd" ],
+      "binaryDir": "${sourceDir}/build/1"
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.static",
+      "inherits": [ "default", "windows", "ninja", "msvc-16-x64", "debug", "static", "mtd" ],
+      "binaryDir": "${sourceDir}/build/2"
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.release.shared",
+      "inherits": [ "default", "windows", "ninja", "msvc-16-x64", "release", "shared", "md" ],
+      "binaryDir": "${sourceDir}/build/3"
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.release.static",
+      "inherits": [ "default", "windows", "ninja", "msvc-16-x64", "release", "static", "mt" ],
+      "binaryDir": "${sourceDir}/build/4"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "jobs": 3
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.interface",
+      "configurePreset": "windows.ninja.msvc-16-x64.interface",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.shared",
+      "configurePreset": "windows.ninja.msvc-16-x64.debug.shared",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.static",
+      "configurePreset": "windows.ninja.msvc-16-x64.debug.static",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.release.shared",
+      "configurePreset": "windows.ninja.msvc-16-x64.release.shared",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.release.static",
+      "configurePreset": "windows.ninja.msvc-16-x64.release.static",
+      "inherits": [ "default" ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "hidden": true,
+      "output": {
+        "verbosity": "verbose",
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "name": "(UiTestsA.test1)|(UiTestsB.test1)|(UiTestsC.test1)|(UiTestsD.test1)|(UiTestsE.test1)"
+        }
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.interface",
+      "configurePreset": "windows.ninja.msvc-16-x64.interface",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.shared",
+      "configurePreset": "windows.ninja.msvc-16-x64.debug.shared",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.static",
+      "configurePreset": "windows.ninja.msvc-16-x64.debug.static",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.release.shared",
+      "configurePreset": "windows.ninja.msvc-16-x64.release.shared",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.release.static",
+      "configurePreset": "windows.ninja.msvc-16-x64.release.static",
+      "inherits": [ "default" ]
+    }
+  ]
+}
