@@ -1,7 +1,6 @@
 #include "exqudens/SocketServer.hpp"
 
 #include <string>
-#include <vector>
 #include <stdexcept>
 
 #include <winsock2.h>
@@ -94,7 +93,7 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      clientSocket = accept(listenSocket, nullptr, nullptr);
+      size_t clientSocket = accept(listenSocket, nullptr, nullptr);
 
       if (clientSocket == INVALID_SOCKET) {
         wsaLastError = WSAGetLastError();
@@ -125,7 +124,7 @@ namespace exqudens {
           errorMessage += std::to_string(wsaLastError);
           errorMessage += "'";
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-        } else {
+        } else if (result > 0) {
           std::vector<char> bufferTmp(buffer.begin(), buffer.begin() + result);
           receiveFunction(bufferTmp);
 
@@ -149,7 +148,7 @@ namespace exqudens {
             throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
           }
         }
-      } while (result > 0 && result <= bufferSize);
+      } while (result > 0);
 
       result = shutdown(clientSocket, SD_SEND);
 

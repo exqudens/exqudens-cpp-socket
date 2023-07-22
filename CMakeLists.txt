@@ -264,6 +264,8 @@ else()
     add_library("${PROJECT_NAME}"
         "src/main/cpp/exqudens/SocketServer.hpp"
         "src/main/cpp/exqudens/WindowsSocketServer.cpp"
+        "src/main/cpp/exqudens/SocketClient.hpp"
+        "src/main/cpp/exqudens/WindowsSocketClient.cpp"
     )
     string(CONCAT EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES_CONTENT
         "#ifndef EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES\n"

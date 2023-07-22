@@ -12,7 +12,6 @@ namespace exqudens {
     private:
 
       unsigned int port = 27015;
-      size_t clientSocket = (size_t) (~0);
       std::function<void(const std::vector<char>&)> receiveFunction = {};
 
     public:
