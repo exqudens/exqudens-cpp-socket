@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "exqudens/socket_export.hpp"
@@ -10,15 +11,15 @@ namespace exqudens {
 
     private:
 
-      unsigned int port = 27015;
+      unsigned short port = 27015;
 
     public:
 
       SocketClient() = default;
 
-      SocketClient& setPort(const unsigned int& value);
+      SocketClient& setPort(const unsigned short& value);
 
-      int sendData(const std::vector<char>& value);
+      size_t sendData(const std::vector<char>& value);
 
       ~SocketClient() = default;
 

@@ -1,5 +1,6 @@
 #include "exqudens/SocketServer.hpp"
 
+#include <cstddef>
 #include <string>
 #include <stdexcept>
 
@@ -8,12 +9,12 @@
 
 namespace exqudens {
 
-  SocketServer& SocketServer::setPort(const unsigned int& value) {
+  SocketServer& SocketServer::setPort(const unsigned short& value) {
     port = value;
     return *this;
   }
 
-  SocketServer& SocketServer::setReceiveFunction(const std::function<void(const std::vector<char>&)>& value) {
+  SocketServer& SocketServer::setReceiveFunction(const std::function<std::vector<char>(const std::vector<char>&)>& value) {
     receiveFunction = value;
     return *this;
   }
@@ -126,14 +127,7 @@ namespace exqudens {
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         } else if (result > 0) {
           std::vector<char> bufferTmp(buffer.begin(), buffer.begin() + result);
-          receiveFunction(bufferTmp);
-
-          std::vector<char> sendBuffer(sizeof(result));
-          std::copy(
-              static_cast<const char*>(static_cast<const void*>(&result)),
-              static_cast<const char*>(static_cast<const void*>(&result)) + sizeof(result),
-              sendBuffer.data()
-          );
+          std::vector<char> sendBuffer = receiveFunction(bufferTmp);
           int sendResult = send(clientSocket, sendBuffer.data(), (int) sendBuffer.size(), 0);
 
           if (sendResult == SOCKET_ERROR) {

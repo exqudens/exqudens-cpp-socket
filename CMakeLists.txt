@@ -7,7 +7,7 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "39b926a55f3934600e31fea9cbc9175a"
+            EXPECTED_MD5 "6c9723c3597c83ddda760aef03e3f82e"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -132,10 +132,6 @@ if(${SKIP_CMAKE_TEST})
     set(TARGET_CMAKE_INSTALL_DEPENDS_ON "${PROJECT_NAME}")
 endif()
 
-if("msvc-16-x64" IN_LIST "PRESET_NAME_ELEMENTS")
-    set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
-endif()
-
 set_conan_architecture(CONAN_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 set_conan_compiler(CONAN_COMPILER "${CMAKE_CXX_COMPILER_ID}")
 set_conan_compiler_version(CONAN_COMPILER_VERSION "${CMAKE_CXX_COMPILER_ID}" "${CMAKE_CXX_COMPILER_VERSION}")
@@ -224,6 +220,11 @@ if(NOT "" STREQUAL "${NOT_FOUND_PACKAGE_NAMES}")
         message(WARNING "${package}_FOUND: '${${package}_FOUND}' ${package}_NOT_FOUND_MESSAGE: '${${package}_NOT_FOUND_MESSAGE}'")
     endforeach()
     return()
+endif()
+
+if("msvc-16-x64" IN_LIST "PRESET_NAME_ELEMENTS")
+    set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
+elseif("gcc" IN_LIST "PRESET_NAME_ELEMENTS")
 endif()
 
 if("${INTERFACE_ONLY}")

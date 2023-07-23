@@ -11,16 +11,16 @@ namespace exqudens {
 
     private:
 
-      unsigned int port = 27015;
-      std::function<void(const std::vector<char>&)> receiveFunction = {};
+      unsigned short port = 27015;
+      std::function<std::vector<char>(const std::vector<char>&)> receiveFunction = {};
 
     public:
 
       SocketServer() = default;
 
-      SocketServer& setPort(const unsigned int& value);
+      SocketServer& setPort(const unsigned short& value);
 
-      SocketServer& setReceiveFunction(const std::function<void(const std::vector<char>&)>& value);
+      SocketServer& setReceiveFunction(const std::function<std::vector<char>(const std::vector<char>&)>& value);
 
       void start();
 

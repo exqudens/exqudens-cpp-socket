@@ -8,12 +8,12 @@
 
 namespace exqudens {
 
-  SocketClient& SocketClient::setPort(const unsigned int& value) {
+  SocketClient& SocketClient::setPort(const unsigned short& value) {
     port = value;
     return *this;
   }
 
-  int SocketClient::sendData(const std::vector<char>& value) {
+  size_t SocketClient::sendData(const std::vector<char>& value) {
     try {
       WSADATA wsaData;
       int result = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -140,8 +140,8 @@ namespace exqudens {
       closesocket(connectSocket);
       WSACleanup();
 
-      int output = 0;
-      std::memcpy(&output, outputBuffer.data(), sizeof(int));
+      size_t output = 0;
+      std::memcpy(&output, outputBuffer.data(), sizeof(size_t));
       return output;
     } catch (...) {
       std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
