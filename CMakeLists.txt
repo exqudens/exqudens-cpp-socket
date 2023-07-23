@@ -7,7 +7,7 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "6c9723c3597c83ddda760aef03e3f82e"
+            EXPECTED_MD5 "3db5a119eb1167ae992e88a4ca554079"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -217,23 +217,32 @@ endforeach()
 set_not_found_package_names(NOT_FOUND_PACKAGE_NAMES ${NOT_FOUND_PACKAGE_NAMES})
 if(NOT "" STREQUAL "${NOT_FOUND_PACKAGE_NAMES}")
     foreach(package ${NOT_FOUND_PACKAGE_NAMES})
-        message(WARNING "${package}_FOUND: '${${package}_FOUND}' ${package}_NOT_FOUND_MESSAGE: '${${package}_NOT_FOUND_MESSAGE}'")
+        message(SEND_ERROR "${package}_FOUND: '${${package}_FOUND}' ${package}_NOT_FOUND_MESSAGE: '${${package}_NOT_FOUND_MESSAGE}'")
     endforeach()
-    return()
+    message(FATAL_ERROR "Some package not found!")
 endif()
 
-if("msvc-16-x64" IN_LIST "PRESET_NAME_ELEMENTS")
+set("${PROJECT_NAME}-header-files"
+    "src/main/cpp/exqudens/SocketServer.hpp"
+    "src/main/cpp/exqudens/SocketClient.hpp"
+)
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
-elseif("gcc" IN_LIST "PRESET_NAME_ELEMENTS")
+    set("${PROJECT_NAME}-source-files"
+        "src/main/cpp/exqudens/WindowsSocketServer.cpp"
+        "src/main/cpp/exqudens/WindowsSocketClient.cpp"
+    )
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 endif()
-
 if("${INTERFACE_ONLY}")
     generate_interface_only_files(GENERATED_SOURCES
         SRC_DIRECTORY "${PROJECT_SOURCE_DIR}"
         SRC_BASE_DIRECTORY "${PROJECT_SOURCE_DIR}/src/main/cpp"
         DST_BASE_DIRECTORY "${PROJECT_BINARY_DIR}/generated/src/main/cpp"
-        HEADER_FILES_EXPRESSION "**/*.hpp"
-        SOURCE_FILES_EXPRESSION "**/*.cpp"
+        HEADER_FILES ${${PROJECT_NAME}-header-files}
+        SOURCE_FILES ${${PROJECT_NAME}-source-files}
+        HEADER_SOURCE_MAPS "SocketServer>${CMAKE_SYSTEM_NAME}SocketServer"
+                           "SocketClient>${CMAKE_SYSTEM_NAME}SocketClient"
     )
 
     add_library("${PROJECT_NAME}" INTERFACE
@@ -263,10 +272,8 @@ if("${INTERFACE_ONLY}")
     )
 else()
     add_library("${PROJECT_NAME}"
-        "src/main/cpp/exqudens/SocketServer.hpp"
-        "src/main/cpp/exqudens/WindowsSocketServer.cpp"
-        "src/main/cpp/exqudens/SocketClient.hpp"
-        "src/main/cpp/exqudens/WindowsSocketClient.cpp"
+        ${${PROJECT_NAME}-header-files}
+        ${${PROJECT_NAME}-source-files}
     )
     string(CONCAT EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES_CONTENT
         "#ifndef EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES\n"
