@@ -15,13 +15,13 @@ namespace exqudens {
 
     public:
 
-      SocketClient() = default;
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES SocketClient() = default;
 
-      SocketClient& setPort(const unsigned short& value);
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES SocketClient& setPort(const unsigned short& value);
 
-      size_t sendData(const std::vector<char>& value);
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES size_t sendData(const std::vector<char>& value);
 
-      ~SocketClient() = default;
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES ~SocketClient() = default;
 
   };
 

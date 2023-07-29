@@ -11,22 +11,23 @@ namespace exqudens {
 
     private:
 
+      bool stoped = false;
       unsigned short port = 27015;
       std::function<std::vector<char>(const std::vector<char>&)> receiveFunction = {};
 
     public:
 
-      SocketServer() = default;
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES SocketServer() = default;
 
-      SocketServer& setPort(const unsigned short& value);
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES SocketServer& setPort(const unsigned short& value);
 
-      SocketServer& setReceiveFunction(const std::function<std::vector<char>(const std::vector<char>&)>& value);
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES SocketServer& setReceiveFunction(const std::function<std::vector<char>(const std::vector<char>&)>& value);
 
-      void start();
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES void start();
 
-      void stop();
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES void stop();
 
-      ~SocketServer() = default;
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES ~SocketServer() = default;
 
   };
 
