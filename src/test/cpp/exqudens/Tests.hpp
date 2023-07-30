@@ -19,7 +19,19 @@ namespace exqudens::socket {
 
     public:
 
-      static std::vector<char> accept(const std::vector<char>& in) {
+      static std::vector<char> accept1(const std::vector<char>& in) {
+        size_t inSize = in.size();
+        std::cout << std::format("inSize: '{}'", inSize) << std::endl;
+        std::vector<char> out(sizeof(inSize));
+        std::copy(
+            static_cast<const char*>(static_cast<const void*>(&inSize)),
+            static_cast<const char*>(static_cast<const void*>(&inSize)) + sizeof(inSize),
+            out.data()
+        );
+        return out;
+      }
+
+      std::vector<char> accept2(const std::vector<char>& in) {
         size_t inSize = in.size();
         std::cout << std::format("inSize: '{}'", inSize) << std::endl;
         std::vector<char> out(sizeof(inSize));
@@ -36,7 +48,10 @@ namespace exqudens::socket {
   TEST_F(Tests, test1) {
     try {
       TestThreadPool pool(1, 1);
-      SocketServer server = SocketServer().setReceiveFunction(&Tests::accept);
+      SocketServer server = SocketServer();
+      //server.setReceiveHandler(&Tests::accept1);
+      //server.setReceiveHandler([this](const std::vector<char>& in) { return accept2(in); });
+      server.setReceiveHandler(&Tests::accept2, this);
       SocketClient client = SocketClient();
 
       std::future<void> future = pool.submit(&SocketServer::start, &server);

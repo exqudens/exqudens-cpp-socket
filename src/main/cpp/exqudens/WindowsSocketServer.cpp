@@ -11,14 +11,12 @@
 
 namespace exqudens {
 
-  SocketServer& SocketServer::setPort(const unsigned short& value) {
+  void SocketServer::setPort(const unsigned short& value) {
     port = value;
-    return *this;
   }
 
-  SocketServer& SocketServer::setReceiveFunction(const std::function<std::vector<char>(const std::vector<char>&)>& value) {
-    receiveFunction = value;
-    return *this;
+  void SocketServer::setReceiveHandler(const std::function<std::vector<char>(const std::vector<char>&)>& function) {
+    receiveHandler = function;
   }
 
   void SocketServer::start() {
@@ -187,7 +185,7 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       } else if (recvResult > 0) {
         std::vector<char> tmpBuffer = std::vector<char>(inputBuffer.begin(), inputBuffer.begin() + recvResult);
-        outputBuffer = receiveFunction(tmpBuffer);
+        outputBuffer = receiveHandler(tmpBuffer);
       }
 
       std::cout << "[server] 'recv' success." << std::endl;
@@ -251,11 +249,7 @@ namespace exqudens {
   }
 
   void SocketServer::stop() {
-    try {
-      stoped = true;
-    } catch (...) {
-      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
-    }
+    stoped = true;
   }
 
 }
