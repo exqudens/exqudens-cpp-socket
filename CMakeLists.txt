@@ -417,9 +417,10 @@ set_target_properties("client-app" PROPERTIES
 add_library("test-lib" STATIC
     "src/test/cpp/TestApplication.hpp"
     "src/test/cpp/TestApplication.cpp"
+    "src/test/cpp/TestUtils.hpp"
+    "src/test/cpp/TestUtils.cpp"
     "src/test/cpp/TestThreadPool.hpp"
     "src/test/cpp/TestThreadPool.cpp"
-    #"src/test/cpp/TestUtils.hpp"
     "src/test/cpp/exqudens/Tests.hpp"
 )
 target_include_directories("test-lib" PUBLIC
@@ -522,35 +523,7 @@ add_custom_target("conan-export"
             "${CMAKE_INSTALL_PREFIX}"
             ${CONAN_SETTINGS}
             ${CONAN_OPTIONS}
-    DEPENDS "cmake-install"
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    VERBATIM
-    USES_TERMINAL
-)
-
-add_custom_target("cmake-doc"
-    COMMAND "${CMAKE_COMMAND}"
-            "-P"
-            "cmake/run-sphinx.cmake"
-            "--"
-            "VERBOSE" "true"
-            "OUTPUT_DIR" "build/doc/full"
-            "TEST_REPORT_FILES" "${PROJECT_BINARY_DIR}/test/report/xml/Tests.test1.xml"
-                                "${PROJECT_BINARY_DIR}/test/report/xml/Tests.test2.xml"
-                                "${PROJECT_BINARY_DIR}/test/report/xml/Tests.test3.xml"
-                                "${PROJECT_BINARY_DIR}/test/report/xml/Tests.test4.xml"
-                                "${PROJECT_BINARY_DIR}/test/report/xml/Tests.test5.xml"
-            "EXTRA_FILES" "${PROJECT_BINARY_DIR}/test/report/xml/Tests.test1.xml>test/report/xml/Tests.test1.xml"
-                           "test.txt"
-    COMMAND "${CMAKE_COMMAND}"
-            "-P"
-            "cmake/run-sphinx.cmake"
-            "--"
-            "VERBOSE" "true"
-            "TITLE" "User Requirements"
-            "OUTPUT_DIR" "build/doc/user-requirements"
-            "FILES" "traceability/user-requirements.rst"
-    DEPENDS "cmake-test"
+    DEPENDS "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}-config.cmake"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
