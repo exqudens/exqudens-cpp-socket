@@ -11,7 +11,7 @@ namespace exqudens {
 
     private:
 
-      bool stoped = false;
+      volatile bool stopped = false;
       unsigned short port = 27015;
       std::function<std::vector<char>(const std::vector<char>&)> receiveHandler = {};
 

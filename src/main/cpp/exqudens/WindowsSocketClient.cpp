@@ -128,9 +128,7 @@ namespace exqudens {
         closesocket(connectSocket);
         WSACleanup();
         std::string errorMessage = "'WSAPoll (Out)' read events '";
-        errorMessage += std::to_string(fdArray.revents);
-        errorMessage += "' not equal to '";
-        errorMessage += std::to_string(POLLWRNORM);
+        errorMessage += std::to_string((fdArray.revents & POLLWRNORM));
         errorMessage += "'";
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
@@ -174,9 +172,7 @@ namespace exqudens {
         closesocket(connectSocket);
         WSACleanup();
         std::string errorMessage = "'WSAPoll (In)' read events '";
-        errorMessage += std::to_string(fdArray.revents);
-        errorMessage += "' not equal to '";
-        errorMessage += std::to_string(POLLRDNORM);
+        errorMessage += std::to_string((fdArray.revents & POLLRDNORM));
         errorMessage += "'";
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
