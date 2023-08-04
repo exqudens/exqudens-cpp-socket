@@ -77,12 +77,13 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      log("'socket' success.");
+      log("'socket' success. listenSocket: '" + std::to_string(listenSocket) + "'");
 
       setSockOptResult = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&mode), sizeof(mode));
 
       if (setSockOptResult != NO_ERROR) {
         wsaLastError = WSAGetLastError();
+        closesocket(listenSocket);
         WSACleanup();
         errorMessage = "'setsockopt' failed with result: '";
         errorMessage += std::to_string(setSockOptResult);
@@ -98,6 +99,7 @@ namespace exqudens {
 
       if (ioctlSocketResult == SOCKET_ERROR) {
         wsaLastError = WSAGetLastError();
+        closesocket(listenSocket);
         WSACleanup();
         errorMessage = "'ioctlsocket' failed with result: '";
         errorMessage += std::to_string(ioctlSocketResult);
@@ -113,6 +115,7 @@ namespace exqudens {
 
       if (bindResult != NO_ERROR) {
         wsaLastError = WSAGetLastError();
+        closesocket(listenSocket);
         WSACleanup();
         errorMessage = "'bind' failed with result: '";
         errorMessage += std::to_string(bindResult);
@@ -128,6 +131,7 @@ namespace exqudens {
 
       if (listenResult != NO_ERROR) {
         wsaLastError = WSAGetLastError();
+        closesocket(listenSocket);
         WSACleanup();
         errorMessage = "'listen' failed with result: '";
         errorMessage += std::to_string(listenResult);
@@ -192,7 +196,7 @@ namespace exqudens {
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         }
 
-        log("'accept' success.");
+        log("'accept' success. acceptedSocket: '" + std::to_string(acceptedSocket) + "'");
 
         inputBuffer = std::vector<char>(1024);
         recvResult = recv(acceptedSocket, inputBuffer.data(), (int) inputBuffer.size(), 0);
