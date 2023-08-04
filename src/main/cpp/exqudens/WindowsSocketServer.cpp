@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <string>
 #include <stdexcept>
-#include <iostream>
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -15,11 +14,15 @@ namespace exqudens {
     port = value;
   }
 
-  void SocketServer::setReceiveHandler(const std::function<std::vector<char>(const std::vector<char>&)>& function) {
-    receiveHandler = function;
+  void SocketServer::setLogHandler(const std::function<void(const std::string&)>& value) {
+    logHandler = value;
   }
 
-  void SocketServer::start() {
+  void SocketServer::setExchangeHandler(const std::function<std::vector<char>(const std::vector<char>&)>& value) {
+    exchangeHandler = value;
+  }
+
+  void SocketServer::run() {
     try {
       WSADATA wsaData;
       int wsaStartupResult;
@@ -53,13 +56,13 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      std::cout << "[server] 'WSAStartup' success." << std::endl;
+      log("'WSAStartup' success.");
 
       socketAddressStorage.ss_family = AF_INET6;
       INETADDR_SETANY((SOCKADDR*) &socketAddressStorage);
       SS_PORT((SOCKADDR*) &socketAddressStorage) = htons(port);
 
-      std::cout << "[server] 'htons' success." << std::endl;
+      log("'htons' success.");
 
       listenSocket = socket(AF_INET6, SOCK_STREAM, 0);
 
@@ -74,7 +77,7 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      std::cout << "[server] 'socket' success." << std::endl;
+      log("'socket' success.");
 
       setSockOptResult = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&mode), sizeof(mode));
 
@@ -89,7 +92,7 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      std::cout << "[server] 'setsockopt' success." << std::endl;
+      log("'setsockopt' success.");
 
       ioctlSocketResult = ioctlsocket(listenSocket, FIONBIO, &mode);
 
@@ -104,7 +107,7 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      std::cout << "[server] 'ioctlsocket' success." << std::endl;
+      log("'ioctlsocket' success.");
 
       bindResult = bind(listenSocket, (SOCKADDR*) &socketAddressStorage, sizeof(socketAddressStorage));
 
@@ -119,7 +122,7 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      std::cout << "[server] 'bind' success." << std::endl;
+      log("'bind' success.");
 
       listenResult = listen(listenSocket, 32);
 
@@ -134,7 +137,7 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      std::cout << "[server] 'listen' success." << std::endl;
+      log("'listen' success.");
 
       do {
         acceptedSocket = INVALID_SOCKET;
@@ -157,7 +160,7 @@ namespace exqudens {
             throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
           }
 
-          std::cout << "[server] 'WSAPoll (In)' success." << std::endl;
+          log("'WSAPoll (In)' success.");
         } while (!stopped && !(fdArray.revents & POLLRDNORM));
 
         if (stopped) {
@@ -173,7 +176,7 @@ namespace exqudens {
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         }
 
-        std::cout << "[server] 'WSAPoll (In) read events' success." << std::endl;
+        log("'WSAPoll (In) read events' success.");
 
         acceptedSocket = accept(listenSocket, nullptr, nullptr);
 
@@ -189,7 +192,7 @@ namespace exqudens {
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         }
 
-        std::cout << "[server] 'accept' success." << std::endl;
+        log("'accept' success.");
 
         inputBuffer = std::vector<char>(1024);
         recvResult = recv(acceptedSocket, inputBuffer.data(), (int) inputBuffer.size(), 0);
@@ -207,10 +210,10 @@ namespace exqudens {
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         } else if (recvResult > 0) {
           tmpBuffer = std::vector<char>(inputBuffer.begin(), inputBuffer.begin() + recvResult);
-          outputBuffer = receiveHandler(tmpBuffer);
+          outputBuffer = exchangeHandler(tmpBuffer);
         }
 
-        std::cout << "[server] 'recv' success." << std::endl;
+        log("'recv' success.");
 
         fdArray.fd = acceptedSocket;
         fdArray.events = POLLWRNORM;
@@ -231,7 +234,7 @@ namespace exqudens {
             throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
           }
 
-          std::cout << "[server] 'WSAPoll (Out)' success." << std::endl;
+          log("'WSAPoll (Out)' success.");
         } while (!stopped && !(fdArray.revents & POLLWRNORM));
 
         if (!(fdArray.revents & POLLWRNORM)) {
@@ -244,7 +247,7 @@ namespace exqudens {
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         }
 
-        std::cout << "[server] 'WSAPoll (Out) read events' success." << std::endl;
+        log("'WSAPoll (Out) read events' success.");
 
         sendResult = send(acceptedSocket, outputBuffer.data(), (int) outputBuffer.size(), 0);
 
@@ -261,7 +264,7 @@ namespace exqudens {
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         }
 
-        std::cout << "[server] 'send' success." << std::endl;
+        log("'send' success.");
 
         closesocket(acceptedSocket);
 
@@ -276,6 +279,12 @@ namespace exqudens {
 
   void SocketServer::stop() {
     stopped = true;
+  }
+
+  void SocketServer::log(const std::string& message) {
+    if (logHandler) {
+      logHandler(message);
+    }
   }
 
 }

@@ -13,7 +13,8 @@ namespace exqudens {
 
       volatile bool stopped = false;
       unsigned short port = 27015;
-      std::function<std::vector<char>(const std::vector<char>&)> receiveHandler = {};
+      std::function<void(const std::string&)> logHandler = {};
+      std::function<std::vector<char>(const std::vector<char>&)> exchangeHandler = {};
 
     public:
 
@@ -21,23 +22,34 @@ namespace exqudens {
       SocketServer() = default;
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setPort(const unsigned short& value);
-
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setReceiveHandler(const std::function<std::vector<char>(const std::vector<char>&)>& function);
+      void setLogHandler(const std::function<void(const std::string&)>& value);
 
       template<class T>
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setReceiveHandler(std::vector<char>(T::*method)(const std::vector<char>&), void* object);
+      void setLogHandler(void(T::*method)(const std::string&), void* object);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void start();
+      void setPort(const unsigned short& value);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void setExchangeHandler(const std::function<std::vector<char>(const std::vector<char>&)>& value);
+
+      template<class T>
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void setExchangeHandler(std::vector<char>(T::*method)(const std::vector<char>&), void* object);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void run();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void stop();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       ~SocketServer() = default;
+
+    private:
+
+      void log(const std::string& message);
 
   };
 
@@ -46,8 +58,13 @@ namespace exqudens {
 namespace exqudens {
 
   template<class T>
-  void SocketServer::setReceiveHandler(std::vector<char>(T::*method)(const std::vector<char>&), void* object) {
-    receiveHandler = std::bind(method, reinterpret_cast<T*>(object), std::placeholders::_1);
+  void SocketServer::setLogHandler(void(T::*method)(const std::string&), void* object) {
+    logHandler = std::bind(method, reinterpret_cast<T*>(object), std::placeholders::_1);
+  }
+
+  template<class T>
+  void SocketServer::setExchangeHandler(std::vector<char>(T::*method)(const std::vector<char>&), void* object) {
+    exchangeHandler = std::bind(method, reinterpret_cast<T*>(object), std::placeholders::_1);
   }
 
 }
