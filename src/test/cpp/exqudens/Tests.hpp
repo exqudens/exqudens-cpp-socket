@@ -24,6 +24,7 @@ namespace exqudens::socket {
     private:
 
       std::mutex mutex = {};
+      std::vector<size_t> receivedSizes = {};
 
     public:
 
@@ -37,16 +38,25 @@ namespace exqudens::socket {
         std::cout << std::format("[client] {}", message) << std::endl;
       }
 
-      std::vector<char> exchange(const std::vector<char>& in) {
-        size_t inSize = in.size();
-        std::cout << std::format("inSize: '{}'", inSize) << std::endl;
-        std::vector<char> out(sizeof(inSize));
-        std::copy(
-            static_cast<const char*>(static_cast<const void*>(&inSize)),
-            static_cast<const char*>(static_cast<const void*>(&inSize)) + sizeof(inSize),
-            out.data()
-        );
-        return out;
+      void receive(const std::vector<char>& value) {
+        std::cout << std::format("receive.size: '{}'", value.size()) << std::endl;
+        receivedSizes.emplace_back(value.size());
+      }
+
+      std::vector<char> send() {
+        std::vector<char> result = {};
+        if (!receivedSizes.empty()) {
+          size_t size = receivedSizes.front();
+          result = std::vector<char>(sizeof(size_t));
+          std::copy(
+              static_cast<const char*>(static_cast<const void*>(&size)),
+              static_cast<const char*>(static_cast<const void*>(&size)) + sizeof(size),
+              result.data()
+          );
+          receivedSizes.erase(receivedSizes.begin());
+        }
+        std::cout << std::format("send.size: '{}'", result.size()) << std::endl;
+        return result;
       }
 
       std::vector<size_t> bytesToSizes(const std::vector<char>& value) {
@@ -63,6 +73,12 @@ namespace exqudens::socket {
         return sizes;
       }
 
+    protected:
+
+      void SetUp() override {
+        receivedSizes.clear();
+      }
+
   };
 
   TEST_F(Tests, test1) {
@@ -72,7 +88,9 @@ namespace exqudens::socket {
       SocketServer server;
       server.setPort(port);
       server.setLogHandler(&Tests::serverLog, this);
-      server.setExchangeHandler(&Tests::exchange, this);
+      server.setReceiveHandler(&Tests::receive, this);
+      server.setSendHandler(&Tests::send, this);
+      //server.setExchangeHandler(&Tests::exchange, this);
       SocketClient client;
       client.setPort(port);
       client.setLogHandler(&Tests::clientLog, this);

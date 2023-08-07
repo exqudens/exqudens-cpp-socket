@@ -18,8 +18,12 @@ namespace exqudens {
     logHandler = value;
   }
 
-  void SocketServer::setExchangeHandler(const std::function<std::vector<char>(const std::vector<char>&)>& value) {
-    exchangeHandler = value;
+  void SocketServer::setReceiveHandler(const std::function<void(const std::vector<char>&)>& value) {
+    receiveHandler = value;
+  }
+
+  void SocketServer::setSendHandler(const std::function<std::vector<char>()>& value) {
+    sendHandler = value;
   }
 
   void SocketServer::runOnce() {
@@ -37,7 +41,6 @@ namespace exqudens {
       size_t acceptedSocket;
       std::vector<char> inputBuffer;
       int recvResult;
-      std::vector<char> tmpBuffer;
       std::vector<char> outputBuffer;
       int sendResult;
       int shutdownResult;
@@ -157,27 +160,35 @@ namespace exqudens {
         }  else if (recvResult == 0) {
           log("'recv' success. connection closing");
         } else {
-          tmpBuffer = std::vector<char>(inputBuffer.begin(), inputBuffer.begin() + recvResult);
-          outputBuffer = exchangeHandler(tmpBuffer);
+          outputBuffer = std::vector<char>(inputBuffer.begin(), inputBuffer.begin() + recvResult);
+          receiveHandler(outputBuffer);
           log("'recv' success. bytes: '" + std::to_string(recvResult) + "'");
-
-          sendResult = send(acceptedSocket, outputBuffer.data(), (int) outputBuffer.size(), 0);
-
-          if (sendResult == SOCKET_ERROR) {
-            wsaLastError = WSAGetLastError();
-            closesocket(acceptedSocket);
-            WSACleanup();
-            errorMessage = "'send' failed with result: '";
-            errorMessage += std::to_string(sendResult);
-            errorMessage += "' error: '";
-            errorMessage += std::to_string(wsaLastError);
-            errorMessage += "'";
-            throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-          }
-
-          log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
         }
       } while (recvResult > 0);
+
+      do {
+        outputBuffer = sendHandler();
+
+        if (outputBuffer.empty()) {
+          break;
+        }
+
+        sendResult = send(acceptedSocket, outputBuffer.data(), (int) outputBuffer.size(), 0);
+
+        if (sendResult == SOCKET_ERROR) {
+          wsaLastError = WSAGetLastError();
+          closesocket(acceptedSocket);
+          WSACleanup();
+          errorMessage = "'send' failed with result: '";
+          errorMessage += std::to_string(sendResult);
+          errorMessage += "' error: '";
+          errorMessage += std::to_string(wsaLastError);
+          errorMessage += "'";
+          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+        }
+
+        log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
+      } while (sendResult > 0);
 
       shutdownResult = shutdown(acceptedSocket, SD_SEND);
 
