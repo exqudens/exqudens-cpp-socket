@@ -22,7 +22,7 @@ namespace exqudens {
     logHandler = value;
   }
 
-  std::vector<char> SocketClient::exchange(const std::vector<char>& value) {
+  void SocketClient::connection() {
     try {
       WSADATA wsaData;
       int wsaDataResult;
@@ -31,13 +31,8 @@ namespace exqudens {
       addrinfo hints = {};
       addrinfo* addressInfo = nullptr;
       int getAddrInfoResult;
-      size_t connectSocket;
+      //size_t connectSocket;
       int connectResult;
-      int sendResult;
-      int shutdownResult;
-      std::vector<char> inputBuffer;
-      int recvResult;
-      std::vector<char> outputBuffer;
 
       wsaDataResult = WSAStartup(MAKEWORD(2,2), &wsaData);
 
@@ -107,65 +102,155 @@ namespace exqudens {
       }
 
       log("'connect' success.");
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
+    }
+  }
 
-      sendResult = send(connectSocket, value.data(), (int) value.size(), 0);
+  int SocketClient::sendData(const std::vector<char>& value) {
+    try {
+      int wsaLastError;
+      std::string errorMessage;
 
-      if (sendResult == SOCKET_ERROR) {
-        wsaLastError = WSAGetLastError();
-        closesocket(connectSocket);
-        WSACleanup();
-        errorMessage = "'send' failed with result: '";
-        errorMessage += std::to_string(sendResult);
-        errorMessage += "' error: '";
-        errorMessage += std::to_string(wsaLastError);
+      if (value.size() > (size_t) sendBufferSize) {
+        errorMessage = "'value.size' greater than sendBufferSize: '";
+        errorMessage += std::to_string(sendBufferSize);
         errorMessage += "'";
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
+      if (value.empty()) {
+        int shutdownResult = shutdown(connectSocket, SD_SEND);
 
-      shutdownResult = shutdown(connectSocket, SD_SEND);
-
-      if (shutdownResult == SOCKET_ERROR) {
-        wsaLastError = WSAGetLastError();
-        closesocket(connectSocket);
-        WSACleanup();
-        errorMessage = "'shutdown' failed with result: '";
-        errorMessage += std::to_string(shutdownResult);
-        errorMessage += "' error: '";
-        errorMessage += std::to_string(wsaLastError);
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
-
-      log("'shutdown' success.");
-
-      do {
-        inputBuffer = std::vector<char>(1024);
-        recvResult = recv(connectSocket, inputBuffer.data(), (int) inputBuffer.size(), 0);
-
-        if (recvResult < 0) {
+        if (shutdownResult == SOCKET_ERROR) {
           wsaLastError = WSAGetLastError();
           closesocket(connectSocket);
           WSACleanup();
-          errorMessage = "'recv' failed with result: '";
-          errorMessage += std::to_string(recvResult);
+          errorMessage = "'shutdown' failed with result: '";
+          errorMessage += std::to_string(shutdownResult);
           errorMessage += "' error: '";
           errorMessage += std::to_string(wsaLastError);
           errorMessage += "'";
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-        } else if (recvResult == 0) {
-          log("'recv' success. connection closing");
-        } else {
-          outputBuffer = std::vector<char>(inputBuffer.begin(), inputBuffer.begin() + recvResult);
-          log("'recv' success. bytes: '" + std::to_string(recvResult) + "'");
         }
-      } while(recvResult > 0);
 
-      log("'recv' success.");
+        log("'shutdown' success.");
 
+        return 0;
+      } else {
+        int sendResult = send(connectSocket, value.data(), (int) value.size(), 0);
+
+        if (sendResult == SOCKET_ERROR) {
+          wsaLastError = WSAGetLastError();
+          closesocket(connectSocket);
+          WSACleanup();
+          errorMessage = "'send' failed with result: '";
+          errorMessage += std::to_string(sendResult);
+          errorMessage += "' error: '";
+          errorMessage += std::to_string(wsaLastError);
+          errorMessage += "'";
+          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+        }
+
+        log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
+
+        return sendResult;
+      }
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
+    }
+  }
+
+  std::vector<char> SocketClient::receiveData() {
+    try {
+      int wsaLastError;
+      std::string errorMessage;
+      std::vector<char> inputBuffer;
+      int recvResult;
+      std::vector<char> outputBuffer;
+
+      inputBuffer = std::vector<char>(receiveBufferSize);
+      recvResult = recv(connectSocket, inputBuffer.data(), (int) inputBuffer.size(), 0);
+
+      if (recvResult < 0) {
+        wsaLastError = WSAGetLastError();
+        closesocket(connectSocket);
+        WSACleanup();
+        errorMessage = "'recv' failed with result: '";
+        errorMessage += std::to_string(recvResult);
+        errorMessage += "' error: '";
+        errorMessage += std::to_string(wsaLastError);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+      } else if (recvResult == 0) {
+        log("'recv' success. connection closing");
+        outputBuffer = std::vector<char>();
+      } else {
+        outputBuffer = std::vector<char>(inputBuffer.begin(), inputBuffer.begin() + recvResult);
+        log("'recv' success. bytes: '" + std::to_string(recvResult) + "'");
+      }
+
+      return outputBuffer;
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
+    }
+  }
+
+  void SocketClient::disconnection() {
+    try {
       closesocket(connectSocket);
       WSACleanup();
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
+    }
+  }
+
+  std::vector<char> SocketClient::exchange(const std::vector<char>& value) {
+    try {
+      std::vector<char> inputBuffer;
+      std::vector<char> outputBuffer;
+
+      if (value.empty()) {
+        return outputBuffer;
+      }
+
+      connection();
+
+      if (value.size() > (size_t) sendBufferSize) {
+        for (size_t i = 0; i < value.size(); i += sendBufferSize) {
+          outputBuffer = {};
+          for (size_t j = 0; j < sendBufferSize && i + j < value.size(); j++) {
+            outputBuffer.emplace_back(value.at(i + j));
+          }
+          sendData(outputBuffer);
+          log("sendData size: '" + std::to_string(outputBuffer.size()) + "'");
+        }
+        sendData({});
+        log("sendData size: '0'");
+      } else {
+        sendData(value);
+        log("sendData size: '" + std::to_string(value.size()) + "'");
+        sendData({});
+        log("sendData size: '0'");
+      }
+
+      outputBuffer = {};
+      size_t received;
+
+      do {
+        inputBuffer = receiveData();
+        log("receiveData size: '" + std::to_string(inputBuffer.size()) + "'");
+
+        if (!inputBuffer.empty()) {
+          for (char c : inputBuffer) {
+            outputBuffer.emplace_back(c);
+          }
+        }
+
+        received = inputBuffer.size();
+      } while (received > 0);
+
+      disconnection();
 
       return outputBuffer;
     } catch (...) {

@@ -49,6 +49,20 @@ namespace exqudens::socket {
         return out;
       }
 
+      std::vector<size_t> bytesToSizes(const std::vector<char>& value) {
+        std::vector<size_t> sizes;
+        for (size_t i = 0; i < value.size(); i += sizeof(size_t)) {
+          std::vector<char> tmp;
+          for (size_t j = 0; j < sizeof(size_t); j++) {
+            tmp.emplace_back(value.at(i + j));
+          }
+          size_t v = 0;
+          std::memcpy(&v, tmp.data(), sizeof(size_t));
+          sizes.emplace_back(v);
+        }
+        return sizes;
+      }
+
   };
 
   TEST_F(Tests, test1) {
@@ -65,18 +79,22 @@ namespace exqudens::socket {
 
       std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
 
-      std::string data = "Abc123!"; // std::string(1024, 'a') + std::string(1024, '1');
-      std::vector<char> bytes(data.begin(), data.end());
+      std::string data = std::string(1024, 'a') + std::string(1024, '1') + "ABC";
+      std::vector<char> bytes = std::vector<char>(data.begin(), data.end());
 
-      size_t expected = bytes.size();
-      std::vector<char> outputBuffer = client.exchange(bytes);
-      size_t actual = 0;
-      std::memcpy(&actual, outputBuffer.data(), sizeof(size_t));
+      bytes = client.exchange(bytes);
 
-      std::cout << std::format("expected: '{}'", expected) << std::endl;
-      std::cout << std::format("actual: '{}'", actual) << std::endl;
+      std::vector<size_t> sizes = bytesToSizes(bytes);
 
-      ASSERT_EQ(expected, actual);
+      std::cout << std::format("sizes.size: '{}'", sizes.size()) << std::endl;
+      std::cout << std::format("sizes[0]: '{}'", sizes.at(0)) << std::endl;
+      std::cout << std::format("sizes[1]: '{}'", sizes.at(1)) << std::endl;
+      std::cout << std::format("sizes[2]: '{}'", sizes.at(2)) << std::endl;
+
+      ASSERT_EQ(3, sizes.size());
+      ASSERT_EQ(1024, sizes.at(0));
+      ASSERT_EQ(1024, sizes.at(1));
+      ASSERT_EQ(3, sizes.at(2));
 
       future.get();
     } catch (const std::exception& e) {

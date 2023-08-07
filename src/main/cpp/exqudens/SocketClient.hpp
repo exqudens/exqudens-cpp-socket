@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <functional>
@@ -15,6 +16,9 @@ namespace exqudens {
       std::string host = "localhost";
       unsigned short port = 27015;
       std::function<void(const std::string&)> logHandler = {};
+      size_t connectSocket;
+      int sendBufferSize = 1024;
+      int receiveBufferSize = 1024;
 
     public:
 
@@ -33,6 +37,18 @@ namespace exqudens {
       template<class T>
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setLogHandler(void(T::*method)(const std::string&), void* object);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void connection();
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      int sendData(const std::vector<char>& value);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      std::vector<char> receiveData();
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void disconnection();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       std::vector<char> exchange(const std::vector<char>& value);
