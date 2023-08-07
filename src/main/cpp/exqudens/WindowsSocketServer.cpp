@@ -148,7 +148,7 @@ namespace exqudens {
       log("'accept' success. acceptedSocket: '" + std::to_string(acceptedSocket) + "'");
 
       do {
-        inputBuffer = std::vector<char>(1024);
+        inputBuffer = std::vector<char>(receiveBufferSize);
         recvResult = recv(acceptedSocket, inputBuffer.data(), (int) inputBuffer.size(), 0);
 
         if (recvResult < 0 || recvResult > (int) inputBuffer.size()) {
@@ -172,6 +172,17 @@ namespace exqudens {
 
       do {
         outputBuffer = sendHandler();
+
+        if (outputBuffer.size() > (size_t) sendBufferSize) {
+          closesocket(acceptedSocket);
+          WSACleanup();
+          errorMessage = "'send' failed output buffer size: '";
+          errorMessage += std::to_string(outputBuffer.size());
+          errorMessage += "' greater than max send buffer size: '";
+          errorMessage += std::to_string(sendBufferSize);
+          errorMessage += "'";
+          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+        }
 
         if (outputBuffer.empty()) {
           break;

@@ -16,6 +16,8 @@ namespace exqudens {
       std::function<void(const std::string&)> logHandler = {};
       std::function<void(const std::vector<char>&)> receiveHandler = {};
       std::function<std::vector<char>()> sendHandler = {};
+      int sendBufferSize = 1024;
+      int receiveBufferSize = 1024;
       size_t listenSocket = ~0;
       bool stopped = false;
 
