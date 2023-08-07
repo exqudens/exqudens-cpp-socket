@@ -40,6 +40,7 @@ namespace exqudens {
       std::vector<char> tmpBuffer;
       std::vector<char> outputBuffer;
       int sendResult;
+      int shutdownResult;
 
       wsaStartupResult = WSAStartup(MAKEWORD(2,2), &wsaData);
 
@@ -177,6 +178,22 @@ namespace exqudens {
           log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
         }
       } while (recvResult > 0);
+
+      shutdownResult = shutdown(acceptedSocket, SD_SEND);
+
+      if (shutdownResult == SOCKET_ERROR) {
+        wsaLastError = WSAGetLastError();
+        closesocket(acceptedSocket);
+        WSACleanup();
+        errorMessage = "'shutdown' failed with result: '";
+        errorMessage += std::to_string(shutdownResult);
+        errorMessage += "' error: '";
+        errorMessage += std::to_string(wsaLastError);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+      }
+
+      log("'shutdown' success.");
 
       closesocket(acceptedSocket);
       WSACleanup();
