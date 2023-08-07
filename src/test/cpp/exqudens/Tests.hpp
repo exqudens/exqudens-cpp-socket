@@ -65,7 +65,7 @@ namespace exqudens::socket {
 
       std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
 
-      std::string data = "Abc123!";
+      std::string data = "Abc123!"; // std::string(1024, 'a') + std::string(1024, '1');
       std::vector<char> bytes(data.begin(), data.end());
 
       size_t expected = bytes.size();

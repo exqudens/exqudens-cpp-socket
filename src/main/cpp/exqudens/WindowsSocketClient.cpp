@@ -10,7 +10,7 @@
 
 namespace exqudens {
 
-  void SocketClient::setHost(const std::string value) {
+  void SocketClient::setHost(const std::string& value) {
     host = value;
   }
 

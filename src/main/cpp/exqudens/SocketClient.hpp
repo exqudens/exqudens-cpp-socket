@@ -22,7 +22,7 @@ namespace exqudens {
       SocketClient() = default;
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setHost(const std::string value);
+      void setHost(const std::string& value);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setPort(const unsigned short& value);
