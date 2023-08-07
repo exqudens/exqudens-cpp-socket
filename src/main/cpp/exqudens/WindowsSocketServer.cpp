@@ -34,7 +34,7 @@ namespace exqudens {
       addrinfo hints = {};
       addrinfo* addressInfo = nullptr;
       int getAddrInfoResult;
-      size_t listenSocket;
+      //size_t listenSocket;
       int wsaLastError;
       int bindResult;
       int listenResult;
@@ -128,6 +128,10 @@ namespace exqudens {
       acceptedSocket = accept(listenSocket, nullptr, nullptr);
 
       if (acceptedSocket == INVALID_SOCKET) {
+        if (stopped) {
+          WSACleanup();
+          return;
+        }
         wsaLastError = WSAGetLastError();
         closesocket(listenSocket);
         WSACleanup();
@@ -208,6 +212,19 @@ namespace exqudens {
 
       closesocket(acceptedSocket);
       WSACleanup();
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
+    }
+  }
+
+  void SocketServer::stop() {
+    try {
+      if (listenSocket != INVALID_SOCKET) {
+        log("'closesocket' listenSocket: '" + std::to_string(listenSocket) + "'");
+        closesocket(listenSocket);
+        listenSocket = INVALID_SOCKET;
+        stopped = true;
+      }
     } catch (...) {
       std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
     }

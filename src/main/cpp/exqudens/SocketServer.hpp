@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 #include <functional>
 
@@ -15,6 +16,8 @@ namespace exqudens {
       std::function<void(const std::string&)> logHandler = {};
       std::function<void(const std::vector<char>&)> receiveHandler = {};
       std::function<std::vector<char>()> sendHandler = {};
+      size_t listenSocket = ~0;
+      bool stopped = false;
 
     public:
 
@@ -47,6 +50,9 @@ namespace exqudens {
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void runOnce();
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void stop();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       ~SocketServer() = default;

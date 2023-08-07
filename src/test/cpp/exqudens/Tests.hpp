@@ -83,6 +83,28 @@ namespace exqudens::socket {
 
   TEST_F(Tests, test1) {
     try {
+      TestThreadPool pool(2, 2);
+
+      SocketServer server;
+      server.setLogHandler(&Tests::serverLog, this);
+      server.setReceiveHandler(&Tests::receive, this);
+      server.setSendHandler(&Tests::send, this);
+
+      std::future<void> runOnceFuture = pool.submit(&SocketServer::runOnce, &server);
+
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+
+      std::future<void> stopFuture = pool.submit(&SocketServer::stop, &server);
+
+      stopFuture.get();
+      runOnceFuture.get();
+    } catch (const std::exception& e) {
+      FAIL() << TestUtils::toString(e);
+    }
+  }
+
+  TEST_F(Tests, test2) {
+    try {
       TestThreadPool pool(1, 1);
       unsigned short port = 27015;
       SocketServer server;
@@ -90,7 +112,6 @@ namespace exqudens::socket {
       server.setLogHandler(&Tests::serverLog, this);
       server.setReceiveHandler(&Tests::receive, this);
       server.setSendHandler(&Tests::send, this);
-      //server.setExchangeHandler(&Tests::exchange, this);
       SocketClient client;
       client.setPort(port);
       client.setLogHandler(&Tests::clientLog, this);
