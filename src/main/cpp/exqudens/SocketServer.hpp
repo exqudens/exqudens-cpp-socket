@@ -11,7 +11,6 @@ namespace exqudens {
 
     private:
 
-      volatile bool stopped = false;
       unsigned short port = 27015;
       std::function<void(const std::string&)> logHandler = {};
       std::function<std::vector<char>(const std::vector<char>&)> exchangeHandler = {};
@@ -22,14 +21,14 @@ namespace exqudens {
       SocketServer() = default;
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void setPort(const unsigned short& value);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setLogHandler(const std::function<void(const std::string&)>& value);
 
       template<class T>
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setLogHandler(void(T::*method)(const std::string&), void* object);
-
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setPort(const unsigned short& value);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setExchangeHandler(const std::function<std::vector<char>(const std::vector<char>&)>& value);
@@ -39,10 +38,7 @@ namespace exqudens {
       void setExchangeHandler(std::vector<char>(T::*method)(const std::vector<char>&), void* object);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void run();
-
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void stop();
+      void runOnce();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       ~SocketServer() = default;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <functional>
 
@@ -11,6 +12,7 @@ namespace exqudens {
 
     private:
 
+      std::string host = "localhost";
       unsigned short port = 27015;
       std::function<void(const std::string&)> logHandler = {};
 
@@ -18,6 +20,9 @@ namespace exqudens {
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       SocketClient() = default;
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void setHost(const std::string value);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setPort(const unsigned short& value);

@@ -23,33 +23,21 @@ namespace exqudens::socket {
 
     private:
 
-      inline static std::mutex mutex = {};
+      std::mutex mutex = {};
 
     public:
 
-      static void staticServerLog(const std::string& message) {
+      void serverLog(const std::string& message) {
         const std::lock_guard<std::mutex> lock(mutex);
         std::cout << std::format("[server] {}", message) << std::endl;
       }
 
-      static void staticClientLog(const std::string& message) {
+      void clientLog(const std::string& message) {
         const std::lock_guard<std::mutex> lock(mutex);
         std::cout << std::format("[client] {}", message) << std::endl;
       }
 
-      static std::vector<char> staticAccept(const std::vector<char>& in) {
-        size_t inSize = in.size();
-        std::cout << std::format("inSize: '{}'", inSize) << std::endl;
-        std::vector<char> out(sizeof(inSize));
-        std::copy(
-            static_cast<const char*>(static_cast<const void*>(&inSize)),
-            static_cast<const char*>(static_cast<const void*>(&inSize)) + sizeof(inSize),
-            out.data()
-        );
-        return out;
-      }
-
-      std::vector<char> accept(const std::vector<char>& in) {
+      std::vector<char> exchange(const std::vector<char>& in) {
         size_t inSize = in.size();
         std::cout << std::format("inSize: '{}'", inSize) << std::endl;
         std::vector<char> out(sizeof(inSize));
@@ -66,35 +54,16 @@ namespace exqudens::socket {
   TEST_F(Tests, test1) {
     try {
       TestThreadPool pool(1, 1);
-      SocketServer server;
-      server.setLogHandler(&Tests::staticServerLog);
-
-      std::future<void> future = pool.submit(&SocketServer::run, &server);
-
-      std::this_thread::sleep_for(std::chrono::seconds(5));
-
-      server.stop();
-      future.get();
-    } catch (const std::exception& e) {
-      FAIL() << TestUtils::toString(e);
-    }
-  }
-
-  TEST_F(Tests, test2) {
-    try {
-      TestThreadPool pool(1, 1);
       unsigned short port = 27015;
       SocketServer server;
       server.setPort(port);
-      server.setLogHandler(&Tests::staticServerLog);
-      server.setExchangeHandler(&Tests::staticAccept);
-      //server.setReceiveHandler([this](const std::vector<char>& in) { return accept(in); });
-      //server.setReceiveHandler(&Tests::accept, this);
-      SocketClient client = SocketClient();
+      server.setLogHandler(&Tests::serverLog, this);
+      server.setExchangeHandler(&Tests::exchange, this);
+      SocketClient client;
       client.setPort(port);
-      client.setLogHandler(&Tests::staticClientLog);
+      client.setLogHandler(&Tests::clientLog, this);
 
-      std::future<void> future = pool.submit(&SocketServer::run, &server);
+      std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
 
       std::string data = "Abc123!";
       std::vector<char> bytes(data.begin(), data.end());
@@ -104,21 +73,18 @@ namespace exqudens::socket {
       size_t actual = 0;
       std::memcpy(&actual, outputBuffer.data(), sizeof(size_t));
 
-      RecordProperty("expected", std::to_string(expected));
-      RecordProperty("actual", std::to_string(actual));
       std::cout << std::format("expected: '{}'", expected) << std::endl;
       std::cout << std::format("actual: '{}'", actual) << std::endl;
 
       ASSERT_EQ(expected, actual);
 
-      server.stop();
       future.get();
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
   }
 
-  TEST_F(Tests, test3) {
+  /*TEST_F(Tests, test2) {
     try {
       TestThreadPool pool(1, 1);
       unsigned short port = 27015;
@@ -164,11 +130,10 @@ namespace exqudens::socket {
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
-  }
+  }*/
 
-  TEST_F(Tests, test4) {
+  /*TEST_F(Tests, test3) {
     try {
-      GTEST_SKIP();
       TestThreadPool pool(1, 1);
       SocketServer server;
       server.setLogHandler(&Tests::staticServerLog);
@@ -201,6 +166,23 @@ namespace exqudens::socket {
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
-  }
+  }*/
+
+  /*TEST_F(Tests, test4) {
+    try {
+      TestThreadPool pool(1, 1);
+      SocketServer server;
+      server.setLogHandler(&Tests::staticServerLog);
+
+      std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
+
+      std::this_thread::sleep_for(std::chrono::seconds(5));
+
+      server.stop();
+      future.get();
+    } catch (const std::exception& e) {
+      FAIL() << TestUtils::toString(e);
+    }
+  }*/
 
 }

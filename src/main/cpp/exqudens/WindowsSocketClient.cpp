@@ -10,6 +10,10 @@
 
 namespace exqudens {
 
+  void SocketClient::setHost(const std::string value) {
+    host = value;
+  }
+
   void SocketClient::setPort(const unsigned short& value) {
     port = value;
   }
@@ -21,10 +25,24 @@ namespace exqudens {
   std::vector<char> SocketClient::exchange(const std::vector<char>& value) {
     try {
       WSADATA wsaData;
-      int wsaDataResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+      int wsaDataResult;
+      std::string errorMessage;
+      int wsaLastError;
+      addrinfo hints = {};
+      addrinfo* addressInfo = nullptr;
+      int getAddrInfoResult;
+      size_t connectSocket;
+      int connectResult;
+      int sendResult;
+      int shutdownResult;
+      std::vector<char> inputBuffer;
+      int recvResult;
+      std::vector<char> outputBuffer;
+
+      wsaDataResult = WSAStartup(MAKEWORD(2,2), &wsaData);
 
       if (wsaDataResult != 0) {
-        std::string errorMessage = "'WSAStartup' failed with result: '";
+        errorMessage = "'WSAStartup' failed with result: '";
         errorMessage += std::to_string(wsaDataResult);
         errorMessage += "'";
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
@@ -32,119 +50,71 @@ namespace exqudens {
 
       log("'WSAStartup' success.");
 
-      int wsaLastError = 0;
-      size_t connectSocket = socket(AF_INET6, SOCK_STREAM, 0);
+      getAddrInfoResult = getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &addressInfo);
+
+      if (getAddrInfoResult != 0) {
+        errorMessage = "'WSAStartup' failed with result: '";
+        errorMessage += std::to_string(wsaDataResult);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+      }
+
+      for(addrinfo* i = addressInfo; i != nullptr; i = i->ai_next) {
+        connectSocket = socket(i->ai_family, i->ai_socktype, i->ai_protocol);
+
+        if (connectSocket == INVALID_SOCKET) {
+          wsaLastError = WSAGetLastError();
+          WSACleanup();
+          errorMessage = "'socket' failed with result: '";
+          errorMessage += std::to_string(connectSocket);
+          errorMessage += "' error: '";
+          errorMessage += std::to_string(wsaLastError);
+          errorMessage += "'";
+          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+        }
+
+        log("'socket' success. connectSocket: '" + std::to_string(connectSocket) + "'");
+
+        connectResult = connect(connectSocket, i->ai_addr, (int) i->ai_addrlen);
+
+        if (connectResult == SOCKET_ERROR) {
+          closesocket(connectSocket);
+          connectSocket = INVALID_SOCKET;
+          continue;
+        }
+
+        break;
+      }
+
+      freeaddrinfo(addressInfo);
 
       if (connectSocket == INVALID_SOCKET) {
-        wsaLastError = WSAGetLastError();
         WSACleanup();
-        std::string errorMessage = "'connect' failed with result: '";
+        errorMessage = "'socket' failed with result: '";
         errorMessage += std::to_string(connectSocket);
-        errorMessage += "' error: '";
-        errorMessage += std::to_string(wsaLastError);
         errorMessage += "'";
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
       log("'socket' success.");
 
-      unsigned long mode = 1L;
-      int setSockOptResult = setsockopt(connectSocket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&mode), sizeof(mode));
-
-      if (setSockOptResult != NO_ERROR) {
-        wsaLastError = WSAGetLastError();
-        closesocket(connectSocket);
-        WSACleanup();
-        std::string errorMessage = "'setsockopt' failed with result: '";
-        errorMessage += std::to_string(setSockOptResult);
-        errorMessage += "' error: '";
-        errorMessage += std::to_string(wsaLastError);
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
-
-      log("'setsockopt' success.");
-
-      int ioctlSocketResult = ioctlsocket(connectSocket, FIONBIO, &mode);
-
-      if (ioctlSocketResult == SOCKET_ERROR) {
-        wsaLastError = WSAGetLastError();
-        closesocket(connectSocket);
-        WSACleanup();
-        std::string errorMessage = "'ioctlsocket' failed with result: '";
-        errorMessage += std::to_string(ioctlSocketResult);
-        errorMessage += "' error: '";
-        errorMessage += std::to_string(wsaLastError);
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
-
-      log("'ioctlsocket' success.");
-
-      SOCKADDR_STORAGE socketAddressStorage = {0};
-      socketAddressStorage.ss_family = AF_INET6;
-      INETADDR_SETLOOPBACK((SOCKADDR*) &socketAddressStorage);
-      SS_PORT((SOCKADDR*) &socketAddressStorage) = htons(port);
-
-      log("'htons' success.");
-
-      int connectResult = connect(connectSocket, (SOCKADDR*) &socketAddressStorage, sizeof(socketAddressStorage));
-
       if (connectResult == SOCKET_ERROR) {
-        wsaLastError = WSAGetLastError();
-        if (wsaLastError != WSAEWOULDBLOCK) {
-          closesocket(connectSocket);
-          WSACleanup();
-          std::string errorMessage = "'connect' failed with result: '";
-          errorMessage += std::to_string(ioctlSocketResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(wsaLastError);
-          errorMessage += "'";
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-        }
+        WSACleanup();
+        errorMessage = "'connect' failed with result: '";
+        errorMessage += std::to_string(connectResult);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
       log("'connect' success.");
 
-      WSAPOLLFD fdArray = {0};
-      fdArray.fd = connectSocket;
-      fdArray.events = POLLWRNORM;
-      int timeout = (3 * 60 * 1000);
-
-      int wsaPollOutResult = WSAPoll(&fdArray, 1, timeout);
-
-      if (wsaPollOutResult == SOCKET_ERROR) {
-        wsaLastError = WSAGetLastError();
-        closesocket(connectSocket);
-        WSACleanup();
-        std::string errorMessage = "'WSAPoll (Out)' failed with result: '";
-        errorMessage += std::to_string(wsaPollOutResult);
-        errorMessage += "' error: '";
-        errorMessage += std::to_string(wsaLastError);
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
-
-      log("'WSAPoll (Out)' success.");
-
-      if(!(fdArray.revents & POLLWRNORM)) {
-        closesocket(connectSocket);
-        WSACleanup();
-        std::string errorMessage = "'WSAPoll (Out)' read events '";
-        errorMessage += std::to_string((fdArray.revents & POLLWRNORM));
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
-
-      log("'WSAPoll (Out) read events' success.");
-
-      int sendResult = send(connectSocket, value.data(), (int) value.size(), 0);
+      sendResult = send(connectSocket, value.data(), (int) value.size(), 0);
 
       if (sendResult == SOCKET_ERROR) {
         wsaLastError = WSAGetLastError();
         closesocket(connectSocket);
         WSACleanup();
-        std::string errorMessage = "'send' failed with result: '";
+        errorMessage = "'send' failed with result: '";
         errorMessage += std::to_string(sendResult);
         errorMessage += "' error: '";
         errorMessage += std::to_string(wsaLastError);
@@ -152,55 +122,45 @@ namespace exqudens {
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      log("'send' success.");
+      log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
 
-      fdArray.events = POLLRDNORM;
-      int wsaPollInResult = WSAPoll(&fdArray, 1, timeout);
+      shutdownResult = shutdown(connectSocket, SD_SEND);
 
-      if (wsaPollInResult == SOCKET_ERROR) {
+      if (shutdownResult == SOCKET_ERROR) {
         wsaLastError = WSAGetLastError();
         closesocket(connectSocket);
         WSACleanup();
-        std::string errorMessage = "'WSAPoll (In)' failed with result: '";
-        errorMessage += std::to_string(wsaPollInResult);
+        errorMessage = "'shutdown' failed with result: '";
+        errorMessage += std::to_string(shutdownResult);
         errorMessage += "' error: '";
         errorMessage += std::to_string(wsaLastError);
         errorMessage += "'";
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
 
-      log("'WSAPoll (In)' success.");
+      log("'shutdown' success.");
 
-      if(!(fdArray.revents & POLLRDNORM)) {
-        closesocket(connectSocket);
-        WSACleanup();
-        std::string errorMessage = "'WSAPoll (In)' read events '";
-        errorMessage += std::to_string((fdArray.revents & POLLRDNORM));
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
+      do {
+        inputBuffer = std::vector<char>(1024);
+        recvResult = recv(connectSocket, inputBuffer.data(), (int) inputBuffer.size(), 0);
 
-      log("'WSAPoll (In) read events' success.");
-
-      std::vector<char> inputBuffer(1024);
-      int recvResult = recv(connectSocket, inputBuffer.data(), (int) inputBuffer.size(), 0);
-      std::vector<char> outputBuffer;
-
-      if (recvResult < 0 || recvResult > (int) inputBuffer.size()) {
-        wsaLastError = WSAGetLastError();
-        closesocket(connectSocket);
-        WSACleanup();
-        std::string errorMessage = "'recv' failed with result: '";
-        errorMessage += std::to_string(recvResult);
-        errorMessage += "' error: '";
-        errorMessage += std::to_string(wsaLastError);
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      } else if (recvResult > 0) {
-        for (int i = 0; i < recvResult; i++) {
-          outputBuffer.emplace_back(inputBuffer.at(i));
+        if (recvResult < 0) {
+          wsaLastError = WSAGetLastError();
+          closesocket(connectSocket);
+          WSACleanup();
+          errorMessage = "'recv' failed with result: '";
+          errorMessage += std::to_string(recvResult);
+          errorMessage += "' error: '";
+          errorMessage += std::to_string(wsaLastError);
+          errorMessage += "'";
+          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+        } else if (recvResult == 0) {
+          log("'recv' success. connection closing");
+        } else {
+          outputBuffer = std::vector<char>(inputBuffer.begin(), inputBuffer.begin() + recvResult);
+          log("'recv' success. bytes: '" + std::to_string(recvResult) + "'");
         }
-      }
+      } while(recvResult > 0);
 
       log("'recv' success.");
 
