@@ -11,19 +11,19 @@ namespace exqudens {
 
   class EXQUDENS_SOCKET_EXPORT SocketClient {
 
+    friend class Sockets;
+
     private:
 
       std::string host = "localhost";
       unsigned short port = 27015;
       std::function<void(const std::string&)> logHandler = {};
-      size_t connectSocket;
       int sendBufferSize = 1024;
       int receiveBufferSize = 1024;
 
-    public:
+      size_t connectSocket = ~0;
 
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      SocketClient() = default;
+    public:
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setHost(const std::string& value);
@@ -35,8 +35,13 @@ namespace exqudens {
       void setLogHandler(const std::function<void(const std::string&)>& value);
 
       template<class T>
+      inline void setLogHandler(void(T::*method)(const std::string&), void* object);
+
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setLogHandler(void(T::*method)(const std::string&), void* object);
+      void setSendBufferSize(const int& value);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void setReceiveBufferSize(const int& value);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void connection();
@@ -58,6 +63,10 @@ namespace exqudens {
 
     private:
 
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      SocketClient() = default;
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void log(const std::string& message);
 
   };

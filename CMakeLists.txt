@@ -91,6 +91,7 @@ set(CMAKE_FIND_USE_PACKAGE_ROOT_PATH FALSE)
 set(CMAKE_FIND_USE_CMAKE_PATH TRUE)
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG FALSE)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS FALSE)
+set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 set(CMAKE_CXX_STANDARD 20)
@@ -229,6 +230,7 @@ set("${PROJECT_NAME}-header-files"
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
     set("${PROJECT_NAME}-source-files"
+        "src/main/cpp/exqudens/WindowsSockets.cpp"
         "src/main/cpp/exqudens/WindowsSocketServer.cpp"
         "src/main/cpp/exqudens/WindowsSocketClient.cpp"
     )
@@ -241,7 +243,8 @@ if("${INTERFACE_ONLY}")
         DST_BASE_DIRECTORY "${PROJECT_BINARY_DIR}/generated/src/main/cpp"
         HEADER_FILES ${${PROJECT_NAME}-header-files}
         SOURCE_FILES ${${PROJECT_NAME}-source-files}
-        HEADER_SOURCE_MAPS "SocketServer>${CMAKE_SYSTEM_NAME}SocketServer"
+        HEADER_SOURCE_MAPS "Sockets>${CMAKE_SYSTEM_NAME}Sockets"
+                           "SocketServer>${CMAKE_SYSTEM_NAME}SocketServer"
                            "SocketClient>${CMAKE_SYSTEM_NAME}SocketClient"
     )
 

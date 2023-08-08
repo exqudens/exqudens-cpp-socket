@@ -10,21 +10,21 @@ namespace exqudens {
 
   class EXQUDENS_SOCKET_EXPORT SocketServer {
 
+    friend class Sockets;
+
     private:
 
       unsigned short port = 27015;
       std::function<void(const std::string&)> logHandler = {};
       std::function<void(const std::vector<char>&)> receiveHandler = {};
       std::function<std::vector<char>()> sendHandler = {};
-      int sendBufferSize = 1024;
       int receiveBufferSize = 1024;
-      size_t listenSocket = ~0;
+      int sendBufferSize = 1024;
       bool stopped = false;
 
-    public:
+      size_t listenSocket = ~0;
 
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      SocketServer() = default;
+    public:
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setPort(const unsigned short& value);
@@ -33,22 +33,28 @@ namespace exqudens {
       void setLogHandler(const std::function<void(const std::string&)>& value);
 
       template<class T>
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setLogHandler(void(T::*method)(const std::string&), void* object);
+      inline void setLogHandler(void(T::*method)(const std::string&), void* object);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setReceiveHandler(const std::function<void(const std::vector<char>&)>& value);
 
       template<class T>
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setReceiveHandler(void(T::* method)(const std::vector<char>&), void* object);
+      inline void setReceiveHandler(void(T::* method)(const std::vector<char>&), void* object);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void setSendHandler(const std::function<std::vector<char>()>& value);
 
       template<class T>
+      inline void setSendHandler(std::vector<char>(T::* method)(), void* object);
+
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setSendHandler(std::vector<char>(T::* method)(), void* object);
+      void setReceiveBufferSize(const int& value);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void setSendBufferSize(const int& value);
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      void setStopped(const bool& value);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void runOnce();
@@ -61,6 +67,10 @@ namespace exqudens {
 
     private:
 
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
+      SocketServer() = default;
+
+      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       void log(const std::string& message);
 
   };

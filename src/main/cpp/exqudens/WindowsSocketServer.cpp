@@ -6,7 +6,6 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <mstcpip.h>
 
 namespace exqudens {
 
@@ -26,10 +25,20 @@ namespace exqudens {
     sendHandler = value;
   }
 
+  void SocketServer::setReceiveBufferSize(const int& value) {
+    receiveBufferSize = value > 0 ? value : 1024;
+  }
+
+  void SocketServer::setSendBufferSize(const int& value) {
+    sendBufferSize = value > 0 ? value : 1024;
+  }
+
+  void SocketServer::setStopped(const bool& value) {
+    stopped = value;
+  }
+
   void SocketServer::runOnce() {
     try {
-      WSADATA wsaData;
-      int wsaStartupResult;
       std::string errorMessage;
       addrinfo hints = {};
       addrinfo* addressInfo = nullptr;
@@ -45,17 +54,6 @@ namespace exqudens {
       int sendResult;
       int shutdownResult;
 
-      wsaStartupResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-
-      if (wsaStartupResult != 0) {
-        errorMessage = "'WSAStartup' failed with result: '";
-        errorMessage += std::to_string(wsaStartupResult);
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
-
-      log("'WSAStartup' success.");
-
       std::memset(&hints, 0, sizeof(hints));
       hints.ai_family = AF_INET;
       hints.ai_socktype = SOCK_STREAM;
@@ -65,7 +63,6 @@ namespace exqudens {
       getAddrInfoResult = getaddrinfo(nullptr, std::to_string(port).c_str(), &hints, &addressInfo);
 
       if (getAddrInfoResult != 0) {
-        WSACleanup();
         errorMessage = "'getaddrinfo' failed with result: '";
         errorMessage += std::to_string(getAddrInfoResult);
         errorMessage += "'";
@@ -79,7 +76,6 @@ namespace exqudens {
       if (listenSocket == INVALID_SOCKET) {
         wsaLastError = WSAGetLastError();
         freeaddrinfo(addressInfo);
-        WSACleanup();
         errorMessage = "'socket' failed with result: '";
         errorMessage += std::to_string(listenSocket);
         errorMessage += "' error: '";
@@ -96,7 +92,6 @@ namespace exqudens {
         wsaLastError = WSAGetLastError();
         freeaddrinfo(addressInfo);
         closesocket(listenSocket);
-        WSACleanup();
         errorMessage = "'bind' failed with result: '";
         errorMessage += std::to_string(bindResult);
         errorMessage += "' error: '";
@@ -114,7 +109,6 @@ namespace exqudens {
       if (listenResult != NO_ERROR) {
         wsaLastError = WSAGetLastError();
         closesocket(listenSocket);
-        WSACleanup();
         errorMessage = "'listen' failed with result: '";
         errorMessage += std::to_string(listenResult);
         errorMessage += "' error: '";
@@ -129,12 +123,10 @@ namespace exqudens {
 
       if (acceptedSocket == INVALID_SOCKET) {
         if (stopped) {
-          WSACleanup();
           return;
         }
         wsaLastError = WSAGetLastError();
         closesocket(listenSocket);
-        WSACleanup();
         errorMessage = "'accept' failed with result: '";
         errorMessage += std::to_string(acceptedSocket);
         errorMessage += "' error: '";
@@ -154,7 +146,6 @@ namespace exqudens {
         if (recvResult < 0 || recvResult > (int) inputBuffer.size()) {
           wsaLastError = WSAGetLastError();
           closesocket(acceptedSocket);
-          WSACleanup();
           errorMessage = "'recv' failed with result: '";
           errorMessage += std::to_string(recvResult);
           errorMessage += "' error: '";
@@ -175,7 +166,6 @@ namespace exqudens {
 
         if (outputBuffer.size() > (size_t) sendBufferSize) {
           closesocket(acceptedSocket);
-          WSACleanup();
           errorMessage = "'send' failed output buffer size: '";
           errorMessage += std::to_string(outputBuffer.size());
           errorMessage += "' greater than max send buffer size: '";
@@ -193,7 +183,6 @@ namespace exqudens {
         if (sendResult == SOCKET_ERROR) {
           wsaLastError = WSAGetLastError();
           closesocket(acceptedSocket);
-          WSACleanup();
           errorMessage = "'send' failed with result: '";
           errorMessage += std::to_string(sendResult);
           errorMessage += "' error: '";
@@ -210,7 +199,6 @@ namespace exqudens {
       if (shutdownResult == SOCKET_ERROR) {
         wsaLastError = WSAGetLastError();
         closesocket(acceptedSocket);
-        WSACleanup();
         errorMessage = "'shutdown' failed with result: '";
         errorMessage += std::to_string(shutdownResult);
         errorMessage += "' error: '";
@@ -222,7 +210,6 @@ namespace exqudens {
       log("'shutdown' success.");
 
       closesocket(acceptedSocket);
-      WSACleanup();
     } catch (...) {
       std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
     }
@@ -242,8 +229,12 @@ namespace exqudens {
   }
 
   void SocketServer::log(const std::string& message) {
-    if (logHandler) {
-      logHandler(message);
+    try {
+      if (logHandler) {
+        logHandler(message);
+      }
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
     }
   }
 

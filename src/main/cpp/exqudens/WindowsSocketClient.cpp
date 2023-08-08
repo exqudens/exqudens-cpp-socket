@@ -6,7 +6,6 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <mstcpip.h>
 
 namespace exqudens {
 
@@ -22,10 +21,16 @@ namespace exqudens {
     logHandler = value;
   }
 
+  void SocketClient::setSendBufferSize(const int& value) {
+    sendBufferSize = value > 0 ? value : 1024;
+  }
+
+  void SocketClient::setReceiveBufferSize(const int& value) {
+    receiveBufferSize = value > 0 ? value : 1024;
+  }
+
   void SocketClient::connection() {
     try {
-      WSADATA wsaData;
-      int wsaDataResult;
       std::string errorMessage;
       int wsaLastError;
       addrinfo hints = {};
@@ -34,22 +39,11 @@ namespace exqudens {
       //size_t connectSocket;
       int connectResult;
 
-      wsaDataResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-
-      if (wsaDataResult != 0) {
-        errorMessage = "'WSAStartup' failed with result: '";
-        errorMessage += std::to_string(wsaDataResult);
-        errorMessage += "'";
-        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-      }
-
-      log("'WSAStartup' success.");
-
       getAddrInfoResult = getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &addressInfo);
 
       if (getAddrInfoResult != 0) {
-        errorMessage = "'WSAStartup' failed with result: '";
-        errorMessage += std::to_string(wsaDataResult);
+        errorMessage = "'getaddrinfo' failed with result: '";
+        errorMessage += std::to_string(getAddrInfoResult);
         errorMessage += "'";
         throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
@@ -59,7 +53,6 @@ namespace exqudens {
 
         if (connectSocket == INVALID_SOCKET) {
           wsaLastError = WSAGetLastError();
-          WSACleanup();
           errorMessage = "'socket' failed with result: '";
           errorMessage += std::to_string(connectSocket);
           errorMessage += "' error: '";
@@ -84,7 +77,6 @@ namespace exqudens {
       freeaddrinfo(addressInfo);
 
       if (connectSocket == INVALID_SOCKET) {
-        WSACleanup();
         errorMessage = "'socket' failed with result: '";
         errorMessage += std::to_string(connectSocket);
         errorMessage += "'";
@@ -94,7 +86,6 @@ namespace exqudens {
       log("'socket' success.");
 
       if (connectResult == SOCKET_ERROR) {
-        WSACleanup();
         errorMessage = "'connect' failed with result: '";
         errorMessage += std::to_string(connectResult);
         errorMessage += "'";
@@ -125,7 +116,6 @@ namespace exqudens {
         if (shutdownResult == SOCKET_ERROR) {
           wsaLastError = WSAGetLastError();
           closesocket(connectSocket);
-          WSACleanup();
           errorMessage = "'shutdown' failed with result: '";
           errorMessage += std::to_string(shutdownResult);
           errorMessage += "' error: '";
@@ -143,7 +133,6 @@ namespace exqudens {
         if (sendResult == SOCKET_ERROR) {
           wsaLastError = WSAGetLastError();
           closesocket(connectSocket);
-          WSACleanup();
           errorMessage = "'send' failed with result: '";
           errorMessage += std::to_string(sendResult);
           errorMessage += "' error: '";
@@ -175,7 +164,6 @@ namespace exqudens {
       if (recvResult < 0) {
         wsaLastError = WSAGetLastError();
         closesocket(connectSocket);
-        WSACleanup();
         errorMessage = "'recv' failed with result: '";
         errorMessage += std::to_string(recvResult);
         errorMessage += "' error: '";
@@ -199,7 +187,6 @@ namespace exqudens {
   void SocketClient::disconnection() {
     try {
       closesocket(connectSocket);
-      WSACleanup();
     } catch (...) {
       std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
     }
@@ -259,8 +246,12 @@ namespace exqudens {
   }
 
   void SocketClient::log(const std::string& message) {
-    if (logHandler) {
-      logHandler(message);
+    try {
+      if (logHandler) {
+        logHandler(message);
+      }
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
     }
   }
 

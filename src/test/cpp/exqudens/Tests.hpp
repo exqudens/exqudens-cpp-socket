@@ -14,8 +14,7 @@
 
 #include "TestUtils.hpp"
 #include "TestThreadPool.hpp"
-#include "exqudens/SocketServer.hpp"
-#include "exqudens/SocketClient.hpp"
+#include "exqudens/Sockets.hpp"
 
 namespace exqudens::socket {
 
@@ -23,19 +22,14 @@ namespace exqudens::socket {
 
     private:
 
-      std::mutex mutex = {};
+      inline static std::mutex mutex = {};
       std::vector<size_t> receivedSizes = {};
 
     public:
 
-      void serverLog(const std::string& message) {
+      static void socketsLog(const std::string& message) {
         const std::lock_guard<std::mutex> lock(mutex);
-        std::cout << std::format("[server] {}", message) << std::endl;
-      }
-
-      void clientLog(const std::string& message) {
-        const std::lock_guard<std::mutex> lock(mutex);
-        std::cout << std::format("[client] {}", message) << std::endl;
+        std::cout << std::format("[SOCKETS] {}", message) << std::endl;
       }
 
       void receive(const std::vector<char>& value) {
@@ -75,8 +69,17 @@ namespace exqudens::socket {
 
     protected:
 
+      static void SetUpTestSuite() {
+        Sockets::setLogHandler(&Tests::socketsLog);
+        Sockets::init();
+      }
+
       void SetUp() override {
         receivedSizes.clear();
+      }
+
+      static void TearDownTestSuite() {
+        Sockets::destroy();
       }
 
   };
@@ -85,19 +88,17 @@ namespace exqudens::socket {
     try {
       TestThreadPool pool(2, 2);
 
-      SocketServer server;
-      server.setLogHandler(&Tests::serverLog, this);
+      SocketServer server = Sockets::createServer();
       server.setReceiveHandler(&Tests::receive, this);
       server.setSendHandler(&Tests::send, this);
 
-      std::future<void> runOnceFuture = pool.submit(&SocketServer::runOnce, &server);
+      std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
 
       std::this_thread::sleep_for(std::chrono::seconds(3));
 
-      std::future<void> stopFuture = pool.submit(&SocketServer::stop, &server);
+      server.stop();
 
-      stopFuture.get();
-      runOnceFuture.get();
+      future.get();
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
@@ -107,14 +108,12 @@ namespace exqudens::socket {
     try {
       TestThreadPool pool(1, 1);
       unsigned short port = 27015;
-      SocketServer server;
+      SocketServer server = Sockets::createServer();
       server.setPort(port);
-      server.setLogHandler(&Tests::serverLog, this);
       server.setReceiveHandler(&Tests::receive, this);
       server.setSendHandler(&Tests::send, this);
-      SocketClient client;
+      SocketClient client = Sockets::createClient();
       client.setPort(port);
-      client.setLogHandler(&Tests::clientLog, this);
 
       std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
 
