@@ -21,6 +21,11 @@
       "cmakeExecutable": "cmake.exe"
     },
     {
+      "name": "linux",
+      "hidden": true,
+      "cmakeExecutable": "cmake"
+    },
+    {
       "name": "ninja",
       "hidden": true,
       "generator": "Ninja"
@@ -40,6 +45,20 @@
         "CMAKE_TOOLCHAIN_FILE": {
           "type": "FILEPATH",
           "value": "../common/msvc-16-x64-toolchain.cmake"
+        }
+      }
+    },
+    {
+      "name": "gcc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "../common/gcc-toolchain.cmake"
+        },
+        "CONAN_COMPILER_LIBCXX": {
+          "type": "STRING",
+          "value": "libstdc++11"
         }
       }
     },
@@ -162,6 +181,12 @@
       "name": "windows.ninja.msvc-16-x64.release.static",
       "inherits": [ "default", "windows", "ninja", "msvc-16-x64", "release", "static", "mt" ],
       "binaryDir": "${sourceDir}/build/4"
+    },
+
+    {
+      "name": "linux.ninja.gcc.debug.shared",
+      "inherits": [ "default", "linux", "ninja", "gcc", "debug", "shared" ],
+      "binaryDir": "${sourceDir}/build/6"
     }
   ],
   "buildPresets": [
@@ -194,6 +219,12 @@
       "name": "windows.ninja.msvc-16-x64.release.static",
       "configurePreset": "windows.ninja.msvc-16-x64.release.static",
       "inherits": [ "default" ]
+    },
+
+    {
+      "name": "linux.ninja.gcc.debug.shared",
+      "configurePreset": "linux.ninja.gcc.debug.shared",
+      "inherits": [ "default" ]
     }
   ],
   "testPresets": [
@@ -211,7 +242,8 @@
       },
       "execution": {
         "noTestsAction": "error",
-        "stopOnFailure": true
+        "stopOnFailure": true,
+        "timeout": 120
       }
     },
     {
@@ -237,6 +269,12 @@
     {
       "name": "windows.ninja.msvc-16-x64.release.static",
       "configurePreset": "windows.ninja.msvc-16-x64.release.static",
+      "inherits": [ "default" ]
+    },
+
+    {
+      "name": "linux.ninja.gcc.debug.shared",
+      "configurePreset": "linux.ninja.gcc.debug.shared",
       "inherits": [ "default" ]
     }
   ]

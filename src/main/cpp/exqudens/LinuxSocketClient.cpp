@@ -5,8 +5,8 @@
 #include <string>
 #include <stdexcept>
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <netdb.h>
+#include <unistd.h>
 
 namespace exqudens {
 
@@ -29,6 +29,7 @@ namespace exqudens {
       addrinfo hints = {};
       addrinfo* addressInfo = nullptr;
       int getAddrInfoResult;
+      int socketResult;
       //size_t connectSocket;
       int connectResult;
 
@@ -49,25 +50,27 @@ namespace exqudens {
       log("'getaddrinfo' success.");
 
       for(addrinfo* i = addressInfo; i != nullptr; i = i->ai_next) {
-        connectSocket = socket(i->ai_family, i->ai_socktype, i->ai_protocol);
+        socketResult = socket(i->ai_family, i->ai_socktype, i->ai_protocol);
 
-        if (connectSocket == INVALID_SOCKET) {
-          lastError = WSAGetLastError();
+        if (socketResult < 0) {
+          lastError = errno;
           errorMessage = "'socket' failed with result: '";
-          errorMessage += std::to_string(connectSocket);
+          errorMessage += std::to_string(socketResult);
           errorMessage += "' error: '";
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
         }
 
+        connectSocket = socketResult;
+
         log("'socket' success. connectSocket: '" + std::to_string(connectSocket) + "'");
 
-        connectResult = connect(connectSocket, i->ai_addr, (int) i->ai_addrlen);
+        connectResult = connect((int) connectSocket, i->ai_addr, (int) i->ai_addrlen);
 
         if (connectResult < 0) {
-          closesocket(connectSocket);
-          connectSocket = INVALID_SOCKET;
+          close((int) connectSocket);
+          connectSocket = ~0;
           continue;
         }
 
@@ -76,7 +79,7 @@ namespace exqudens {
 
       freeaddrinfo(addressInfo);
 
-      if (connectSocket == INVALID_SOCKET) {
+      if (connectSocket == ((size_t) ~0)) {
         errorMessage = "'socket' failed with result: '";
         errorMessage += std::to_string(connectSocket);
         errorMessage += "'";
@@ -107,10 +110,10 @@ namespace exqudens {
           outputBuffer.emplace_back(value.at(i + j));
         }
 
-        int sendResult = send(connectSocket, outputBuffer.data(), (int) outputBuffer.size(), 0);
+        ssize_t sendResult = send((int) connectSocket, outputBuffer.data(), (int) outputBuffer.size(), 0);
 
         if (sendResult < 0) {
-          int lastError = WSAGetLastError();
+          int lastError = errno;
           destroy();
           std::string errorMessage = "'send' failed with result: '";
           errorMessage += std::to_string(sendResult);
@@ -131,10 +134,10 @@ namespace exqudens {
   std::vector<char> SocketClient::receiveData(const int& bufferSize) {
     try {
       std::vector<char> buffer = std::vector<char>(bufferSize > 0 ? bufferSize : 1024);
-      int recvResult = recv(connectSocket, buffer.data(), (int) buffer.size(), 0);
+      ssize_t recvResult = recv((int) connectSocket, buffer.data(), (int) buffer.size(), 0);
 
       if (recvResult < 0) {
-        int lastError = WSAGetLastError();
+        int lastError = errno;
         destroy();
         std::string errorMessage = "'recv' failed with result: '";
         errorMessage += std::to_string(recvResult);
@@ -157,15 +160,15 @@ namespace exqudens {
 
   void SocketClient::destroy() {
     try {
-      if (connectSocket != INVALID_SOCKET) {
+      if (connectSocket != ((size_t) ~0)) {
         size_t tmpConnectSocket = connectSocket;
-        connectSocket = INVALID_SOCKET;
+        connectSocket = ~0;
 
-        int shutdownResult = shutdown(tmpConnectSocket, SD_SEND);
+        int shutdownResult = shutdown((int) tmpConnectSocket, SHUT_WR);
 
         if (shutdownResult < 0) {
-          int lastError = WSAGetLastError();
-          closesocket(tmpConnectSocket);
+          int lastError = errno;
+          close((int) tmpConnectSocket);
           std::string errorMessage = "'shutdown' failed with result: '";
           errorMessage += std::to_string(shutdownResult);
           errorMessage += "' error: '";
@@ -176,10 +179,10 @@ namespace exqudens {
 
         log("'shutdown' success. connectSocket: '" + std::to_string(tmpConnectSocket) + "'");
 
-        int closeSocketResult = closesocket(tmpConnectSocket);
+        int closeSocketResult = close((int) tmpConnectSocket);
 
         if (closeSocketResult < 0) {
-          int lastError = WSAGetLastError();
+          int lastError = errno;
           std::string errorMessage = "'closesocket' failed with result: '";
           errorMessage += std::to_string(closeSocketResult);
           errorMessage += "' error: '";

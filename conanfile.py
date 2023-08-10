@@ -71,7 +71,7 @@ class ConanConfiguration(ConanFile):
     def imports(self):
         try:
             self.copy(pattern="*.dll", dst="bin", src="bin")
-            self.copy(pattern="*.dylib", dst="lib", src="lib")
+            self.copy(pattern="*.so.*", dst="lib", src="lib")
         except Exception as e:
             error(format_exc())
             raise e

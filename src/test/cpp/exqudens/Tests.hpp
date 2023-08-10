@@ -1,13 +1,14 @@
 #pragma once
 
 #include <cstddef>
+#include <cstring>
 #include <chrono>
+#include <string>
 #include <vector>
 #include <exception>
 #include <thread>
 #include <mutex>
 #include <iostream>
-#include <format>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -28,7 +29,7 @@ namespace exqudens::socket {
 
       static void socketsLog(const std::string& message) {
         const std::lock_guard<std::mutex> lock(mutex);
-        std::cout << std::format("[SOCKETS] {}", message) << std::endl;
+        std::cout << "[SOCKETS] " << message << std::endl;
       }
 
       static std::vector<char> toBytes(const size_t& value) {

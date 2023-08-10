@@ -110,10 +110,6 @@ if(MSVC)
 endif()
 string(JOIN " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
-if("" STREQUAL "${CMAKE_MSVC_RUNTIME_LIBRARY}")
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
-endif()
-
 if("${BUILD_SHARED_LIBS}")
     set(CONAN_RELEASE_COMPILER_RUNTIME "MD")
 else()
@@ -135,7 +131,7 @@ endif()
 
 set_conan_architecture(CONAN_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
 set_conan_compiler(CONAN_COMPILER "${CMAKE_CXX_COMPILER_ID}")
-set_conan_compiler_version(CONAN_COMPILER_VERSION "${CMAKE_CXX_COMPILER_ID}" "${CMAKE_CXX_COMPILER_VERSION}")
+set_conan_compiler_version(CONAN_COMPILER_VERSION "${CMAKE_CXX_COMPILER_ID}" "${CMAKE_CXX_COMPILER_VERSION}" MAX_ELEMENTS "1")
 set_conan_compiler_runtime(CONAN_COMPILER_RUNTIME "${CMAKE_MSVC_RUNTIME_LIBRARY}")
 
 set_python_boolean(CONAN_INTERFACE_ONLY "${INTERFACE_ONLY}")
@@ -147,6 +143,7 @@ set_conan_settings(CONAN_SETTINGS
     "compiler=${CONAN_COMPILER}"
     "compiler.version=${CONAN_COMPILER_VERSION}"
     "compiler.runtime=${CONAN_COMPILER_RUNTIME}"
+    "compiler.libcxx=${CONAN_COMPILER_LIBCXX}"
     "build_type=${CMAKE_BUILD_TYPE}"
 )
 set_conan_options(CONAN_OPTIONS
@@ -224,17 +221,23 @@ if(NOT "" STREQUAL "${NOT_FOUND_PACKAGE_NAMES}")
 endif()
 
 set("${PROJECT_NAME}-header-files"
+    "src/main/cpp/exqudens/Sockets.hpp"
     "src/main/cpp/exqudens/SocketServer.hpp"
     "src/main/cpp/exqudens/SocketClient.hpp"
 )
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
     set("${PROJECT_NAME}-source-files"
-        "src/main/cpp/exqudens/WindowsSockets.cpp"
-        "src/main/cpp/exqudens/WindowsSocketServer.cpp"
-        "src/main/cpp/exqudens/WindowsSocketClient.cpp"
+        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}Sockets.cpp"
+        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketServer.cpp"
+        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketClient.cpp"
     )
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    set("${PROJECT_NAME}-source-files"
+        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}Sockets.cpp"
+        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketServer.cpp"
+        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketClient.cpp"
+    )
 endif()
 if("${INTERFACE_ONLY}")
     generate_interface_only_files(GENERATED_SOURCES
@@ -317,8 +320,8 @@ else()
     )
 endif()
 set_property(TARGET "${PROJECT_NAME}" PROPERTY "VERSION" "${PROJECT_VERSION}")
-set_property(TARGET "${PROJECT_NAME}" PROPERTY "SOVERSION" "${PROJECT_VERSION_MAJOR}")
-set_property(TARGET "${PROJECT_NAME}" PROPERTY "INTERFACE_${PROJECT_NAME}_MAJOR_VERSION" "${PROJECT_VERSION_MAJOR}")
+set_property(TARGET "${PROJECT_NAME}" PROPERTY "SOVERSION" "${PROJECT_VERSION}")
+set_property(TARGET "${PROJECT_NAME}" PROPERTY "INTERFACE_${PROJECT_NAME}_MAJOR_VERSION" "${PROJECT_VERSION}")
 set_property(TARGET "${PROJECT_NAME}" APPEND PROPERTY "COMPATIBLE_INTERFACE_STRING" "${PROJECT_NAME}_MAJOR_VERSION")
 install(
     TARGETS "${PROJECT_NAME}"
@@ -390,8 +393,6 @@ target_link_libraries("test-lib" PUBLIC
     "GTest::gtest_main"
 )
 set_target_properties("test-lib" PROPERTIES
-    CXX_STANDARD 23
-
     RUNTIME_OUTPUT_DIRECTORY                "${PROJECT_BINARY_DIR}/test/bin"
     RUNTIME_OUTPUT_DIRECTORY_RELEASE        "${PROJECT_BINARY_DIR}/test/bin"
     RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${PROJECT_BINARY_DIR}/test/bin"
@@ -416,8 +417,6 @@ target_link_libraries("test-app"
     "test-lib"
 )
 set_target_properties("test-app" PROPERTIES
-    CXX_STANDARD 23
-
     RUNTIME_OUTPUT_DIRECTORY                "${PROJECT_BINARY_DIR}/test/bin"
     RUNTIME_OUTPUT_DIRECTORY_RELEASE        "${PROJECT_BINARY_DIR}/test/bin"
     RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${PROJECT_BINARY_DIR}/test/bin"
@@ -437,13 +436,23 @@ set_target_properties("test-app" PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY_DEBUG          "${PROJECT_BINARY_DIR}/test/lib"
 )
 if("${BUILD_SHARED_LIBS}")
-    add_custom_command(TARGET "test-app"
-        POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},RUNTIME_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_PREFIX}/bin" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
-        VERBATIM
-        USES_TERMINAL
-    )
+    if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+        add_custom_command(TARGET "test-app"
+            POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},RUNTIME_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_PREFIX}/bin" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
+            VERBATIM
+            USES_TERMINAL
+        )
+    elseif()
+        add_custom_command(TARGET "test-app"
+            POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},LIBRARY_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,LIBRARY_OUTPUT_DIRECTORY>"
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_PREFIX}/lib" "$<TARGET_PROPERTY:test-app,LIBRARY_OUTPUT_DIRECTORY>"
+            VERBATIM
+            USES_TERMINAL
+        )
+    endif()
 endif()
 
 gtest_discover_tests("test-app"
