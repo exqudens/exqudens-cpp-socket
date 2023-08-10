@@ -23,7 +23,6 @@ namespace exqudens::socket {
     private:
 
       inline static std::mutex mutex = {};
-      std::vector<size_t> receivedSizes = {};
 
     public:
 
@@ -32,39 +31,33 @@ namespace exqudens::socket {
         std::cout << std::format("[SOCKETS] {}", message) << std::endl;
       }
 
-      void receive(const std::vector<char>& value) {
-        std::cout << std::format("receive.size: '{}'", value.size()) << std::endl;
-        receivedSizes.emplace_back(value.size());
-      }
-
-      std::vector<char> send() {
-        std::vector<char> result = {};
-        if (!receivedSizes.empty()) {
-          size_t size = receivedSizes.front();
-          result = std::vector<char>(sizeof(size_t));
-          std::copy(
-              static_cast<const char*>(static_cast<const void*>(&size)),
-              static_cast<const char*>(static_cast<const void*>(&size)) + sizeof(size),
-              result.data()
-          );
-          receivedSizes.erase(receivedSizes.begin());
-        }
-        std::cout << std::format("send.size: '{}'", result.size()) << std::endl;
+      static std::vector<char> toBytes(const size_t& value) {
+        size_t sizeOfValue = sizeof(value);
+        std::vector<char> result = std::vector<char>(sizeOfValue);
+        std::copy(
+            static_cast<const char*>(static_cast<const void*>(&value)),
+            static_cast<const char*>(static_cast<const void*>(&value)) + sizeOfValue,
+            result.data()
+        );
         return result;
       }
 
-      std::vector<size_t> bytesToSizes(const std::vector<char>& value) {
-        std::vector<size_t> sizes;
-        for (size_t i = 0; i < value.size(); i += sizeof(size_t)) {
-          std::vector<char> tmp;
-          for (size_t j = 0; j < sizeof(size_t); j++) {
-            tmp.emplace_back(value.at(i + j));
+      static size_t toSize(const std::vector<char>& value) {
+        size_t result = 0;
+        std::memcpy(&result, value.data(), sizeof(result));
+        return result;
+      }
+
+      static std::vector<std::vector<char>> split(const std::vector<char>& value, const size_t& size) {
+        std::vector<std::vector<char>> result = {};
+        for (size_t i = 0; i < value.size(); i += size) {
+          std::vector<char> part = {};
+          for (size_t j = 0; j < size && i + j < value.size(); j++) {
+            part.emplace_back(value.at(i + j));
           }
-          size_t v = 0;
-          std::memcpy(&v, tmp.data(), sizeof(size_t));
-          sizes.emplace_back(v);
+          result.emplace_back(part);
         }
-        return sizes;
+        return result;
       }
 
     protected:
@@ -72,10 +65,6 @@ namespace exqudens::socket {
       static void SetUpTestSuite() {
         Sockets::setLogHandler(&Tests::socketsLog);
         Sockets::init();
-      }
-
-      void SetUp() override {
-        receivedSizes.clear();
       }
 
       static void TearDownTestSuite() {
@@ -89,14 +78,12 @@ namespace exqudens::socket {
       TestThreadPool pool(2, 2);
 
       SocketServer server = Sockets::createServer();
-      server.setReceiveHandler(&Tests::receive, this);
-      server.setSendHandler(&Tests::send, this);
 
-      std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
+      std::future<void> future = pool.submit(&SocketServer::init, &server);
 
       std::this_thread::sleep_for(std::chrono::seconds(3));
 
-      server.stop();
+      server.destroy();
 
       future.get();
     } catch (const std::exception& e) {
@@ -107,27 +94,56 @@ namespace exqudens::socket {
   TEST_F(Tests, test2) {
     try {
       TestThreadPool pool(1, 1);
-      unsigned short port = 27015;
       SocketServer server = Sockets::createServer();
-      server.setPort(port);
-      server.setReceiveHandler(&Tests::receive, this);
-      server.setSendHandler(&Tests::send, this);
       SocketClient client = Sockets::createClient();
-      client.setPort(port);
 
-      std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
+      std::future<void> future = pool.submit([&server]() {
+        server.init();
+
+        std::vector<char> receivedData;
+        std::vector<char> buffer;
+
+        buffer = server.receiveData();
+        server.sendData(Tests::toBytes(buffer.size()));
+        receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
+
+        buffer = server.receiveData();
+        server.sendData(Tests::toBytes(buffer.size()));
+        receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
+
+        buffer = server.receiveData();
+        server.sendData(Tests::toBytes(buffer.size()));
+        receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
+
+        server.destroy();
+      });
 
       std::string data = std::string(1024, 'a') + std::string(1024, '1') + "ABC";
-      std::vector<char> bytes = std::vector<char>(data.begin(), data.end());
+      std::vector<char> buffer = std::vector<char>(data.begin(), data.end());
+      std::vector<std::vector<char>> parts = Tests::split(buffer, 1024);
+      size_t size = 0;
+      std::vector<size_t> sizes = {};
 
-      bytes = client.exchange(bytes);
+      std::vector<char> receivedData;
 
-      std::vector<size_t> sizes = bytesToSizes(bytes);
+      client.init();
 
-      std::cout << std::format("sizes.size: '{}'", sizes.size()) << std::endl;
-      std::cout << std::format("sizes[0]: '{}'", sizes.at(0)) << std::endl;
-      std::cout << std::format("sizes[1]: '{}'", sizes.at(1)) << std::endl;
-      std::cout << std::format("sizes[2]: '{}'", sizes.at(2)) << std::endl;
+      client.sendData(parts.at(0));
+      buffer = client.receiveData();
+      size = Tests::toSize(buffer);
+      sizes.emplace_back(size);
+
+      client.sendData(parts.at(1));
+      buffer = client.receiveData();
+      size = Tests::toSize(buffer);
+      sizes.emplace_back(size);
+
+      client.sendData(parts.at(2));
+      buffer = client.receiveData();
+      size = Tests::toSize(buffer);
+      sizes.emplace_back(size);
+
+      client.destroy();
 
       ASSERT_EQ(3, sizes.size());
       ASSERT_EQ(1024, sizes.at(0));
@@ -139,106 +155,5 @@ namespace exqudens::socket {
       FAIL() << TestUtils::toString(e);
     }
   }
-
-  /*TEST_F(Tests, test2) {
-    try {
-      TestThreadPool pool(1, 1);
-      unsigned short port = 27015;
-      SocketServer server;
-      server.setPort(port);
-      server.setLogHandler(&Tests::staticServerLog);
-      server.setExchangeHandler([this](const std::vector<char>& in) { return accept(in); });
-      SocketClient client = SocketClient();
-      client.setPort(port);
-      client.setLogHandler(&Tests::staticClientLog);
-
-      std::future<void> future = pool.submit(&SocketServer::run, &server);
-
-      std::string data = "Abc123!";
-      std::vector<char> bytes(data.begin(), data.end());
-
-      size_t expected = bytes.size();
-      std::vector<char> outputBuffer = client.exchange(bytes);
-      size_t actual = 0;
-      std::memcpy(&actual, outputBuffer.data(), sizeof(size_t));
-
-      RecordProperty("expected", std::to_string(expected));
-      RecordProperty("actual", std::to_string(actual));
-      std::cout << std::format("expected: '{}'", expected) << std::endl;
-      std::cout << std::format("actual: '{}'", actual) << std::endl;
-
-      ASSERT_EQ(expected, actual);
-
-      expected = bytes.size();
-      outputBuffer = client.exchange(bytes);
-      actual = 0;
-      std::memcpy(&actual, outputBuffer.data(), sizeof(size_t));
-
-      RecordProperty("expected", std::to_string(expected));
-      RecordProperty("actual", std::to_string(actual));
-      std::cout << std::format("expected: '{}'", expected) << std::endl;
-      std::cout << std::format("actual: '{}'", actual) << std::endl;
-
-      ASSERT_EQ(expected, actual);
-
-      server.stop();
-      future.get();
-    } catch (const std::exception& e) {
-      FAIL() << TestUtils::toString(e);
-    }
-  }*/
-
-  /*TEST_F(Tests, test3) {
-    try {
-      TestThreadPool pool(1, 1);
-      SocketServer server;
-      server.setLogHandler(&Tests::staticServerLog);
-      server.setExchangeHandler(&Tests::accept, this);
-
-      std::future<void> future = pool.submit(&SocketServer::run, &server);
-
-      SocketClient client = SocketClient();
-      client.setLogHandler(&Tests::staticClientLog);
-
-      std::string data = std::string(1024, 'a') + std::string(1024, '1');
-      std::vector<char> bytes(data.begin(), data.end());
-
-      std::cout << std::format("bytes.size: '{}'", bytes.size()) << std::endl;
-
-      size_t expected = bytes.size();
-      std::vector<char> outputBuffer = client.exchange(bytes);
-      size_t actual = 0;
-      std::memcpy(&actual, outputBuffer.data(), sizeof(size_t));
-
-      RecordProperty("expected", std::to_string(expected));
-      RecordProperty("actual", std::to_string(actual));
-      std::cout << std::format("expected: '{}'", expected) << std::endl;
-      std::cout << std::format("actual: '{}'", actual) << std::endl;
-
-      ASSERT_EQ(expected, actual);
-
-      server.stop();
-      future.get();
-    } catch (const std::exception& e) {
-      FAIL() << TestUtils::toString(e);
-    }
-  }*/
-
-  /*TEST_F(Tests, test4) {
-    try {
-      TestThreadPool pool(1, 1);
-      SocketServer server;
-      server.setLogHandler(&Tests::staticServerLog);
-
-      std::future<void> future = pool.submit(&SocketServer::runOnce, &server);
-
-      std::this_thread::sleep_for(std::chrono::seconds(5));
-
-      server.stop();
-      future.get();
-    } catch (const std::exception& e) {
-      FAIL() << TestUtils::toString(e);
-    }
-  }*/
 
 }

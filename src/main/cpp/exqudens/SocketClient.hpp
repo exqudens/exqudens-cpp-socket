@@ -18,8 +18,6 @@ namespace exqudens {
       std::string host = "localhost";
       unsigned short port = 27015;
       std::function<void(const std::string&)> logHandler = {};
-      int sendBufferSize = 1024;
-      int receiveBufferSize = 1024;
 
       size_t connectSocket = ~0;
 
@@ -38,25 +36,16 @@ namespace exqudens {
       inline void setLogHandler(void(T::*method)(const std::string&), void* object);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setSendBufferSize(const int& value);
+      void init();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void setReceiveBufferSize(const int& value);
+      int sendData(const std::vector<char>& value, const int& bufferSize = 1024);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void connection();
+      std::vector<char> receiveData(const int& bufferSize = 1024);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      int sendData(const std::vector<char>& value);
-
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      std::vector<char> receiveData();
-
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      void disconnection();
-
-      EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      std::vector<char> exchange(const std::vector<char>& value);
+      void destroy();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       ~SocketClient() = default;
