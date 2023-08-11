@@ -103,7 +103,7 @@ namespace exqudens {
       acceptResult = accept((int) listenSocket, nullptr, nullptr);
 
       if (acceptResult < 0) {
-        if (listenSocket == ((size_t) ~0)) {
+        if (listenSocket == SIZE_MAX) {
           return;
         }
         lastError = errno;
@@ -119,7 +119,7 @@ namespace exqudens {
       acceptedSocket = acceptResult;
 
       tmpListenSocket = listenSocket;
-      listenSocket = ~0;
+      listenSocket = SIZE_MAX;
       close((int) tmpListenSocket);
 
       log("'accept' success. acceptedSocket: '" + std::to_string(acceptedSocket) + "'");
@@ -155,31 +155,33 @@ namespace exqudens {
     }
   }
 
-  int SocketServer::sendData(const std::vector<char>& buffer, const int& bufferSize) {
+  int SocketServer::sendData(const std::vector<char>& buffer) {
     try {
-      size_t internalBufferSize = bufferSize > 0 ? bufferSize : 1024;
-      for (size_t i = 0; i < buffer.size(); i += internalBufferSize) {
-        std::vector<char> outputBuffer = {};
-        for (size_t j = 0; j < internalBufferSize && i + j < buffer.size(); j++) {
-          outputBuffer.emplace_back(buffer.at(i + j));
-        }
-
-        ssize_t sendResult = send((int) acceptedSocket, outputBuffer.data(), (int) outputBuffer.size(), 0);
-
-        if (sendResult < 0) {
-          int lastError = errno;
-          destroy();
-          std::string errorMessage = "'send' failed with result: '";
-          errorMessage += std::to_string(sendResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(lastError);
-          errorMessage += "'";
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-        }
-
-        log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
+      if (buffer.size() > INT_MAX) {
+        std::string errorMessage = "'buffer' size: '";
+        errorMessage += std::to_string(buffer.size());
+        errorMessage += "' is greater than max buffer size: '";
+        errorMessage += std::to_string(INT_MAX);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
-      return 0;
+
+      ssize_t sendResult = send((int) acceptedSocket, buffer.data(), (int) buffer.size(), 0);
+
+      if (sendResult < 0) {
+        int lastError = errno;
+        destroy();
+        std::string errorMessage = "'send' failed with result: '";
+        errorMessage += std::to_string(sendResult);
+        errorMessage += "' error: '";
+        errorMessage += std::to_string(lastError);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+      }
+
+      log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
+
+      return (int) sendResult;
     } catch (...) {
       std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
     }
@@ -187,54 +189,22 @@ namespace exqudens {
 
   void SocketServer::destroy() {
     try {
-      if (listenSocket != ((size_t) ~0)) {
-        size_t tmpListenSocket = listenSocket;
-        listenSocket = ~0;
-
-        int shutdownResult = shutdown((int) tmpListenSocket, SHUT_RD);
-
-        if (shutdownResult < 0) {
-          int lastError = errno;
-          close((int) tmpListenSocket);
-          std::string errorMessage = "'shutdown' failed with result: '";
-          errorMessage += std::to_string(shutdownResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(lastError);
-          errorMessage += "'";
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-        }
-
-        log("'shutdown' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
-
-        int closeSocketResult = close((int) tmpListenSocket);
-
-        if (closeSocketResult < 0) {
-          int lastError = errno;
-          std::string errorMessage = "'closesocket' failed with result: '";
-          errorMessage += std::to_string(closeSocketResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(lastError);
-          errorMessage += "'";
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-        }
-
-        log("'closesocket' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
-      }
-      if (acceptedSocket != ((size_t) ~0)) {
+      if (acceptedSocket != SIZE_MAX) {
         size_t tmpAcceptedSocket = acceptedSocket;
-        acceptedSocket = ~0;
+        acceptedSocket = SIZE_MAX;
 
-        int shutdownResult = shutdown((int) tmpAcceptedSocket, SHUT_WR);
+        int shutdownResult = shutdown((int) tmpAcceptedSocket, SHUT_RDWR);
 
         if (shutdownResult < 0) {
           int lastError = errno;
-          close((int) tmpAcceptedSocket);
+          //close((int) tmpAcceptedSocket);
           std::string errorMessage = "'shutdown' failed with result: '";
           errorMessage += std::to_string(shutdownResult);
           errorMessage += "' error: '";
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+          //throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+          log("'shutdown' warning " + errorMessage);
         }
 
         log("'shutdown' success. acceptedSocket: '" + std::to_string(tmpAcceptedSocket) + "'");
@@ -252,6 +222,40 @@ namespace exqudens {
         }
 
         log("'closesocket' success. acceptedSocket: '" + std::to_string(tmpAcceptedSocket) + "'");
+      }
+      if (listenSocket != SIZE_MAX) {
+        size_t tmpListenSocket = listenSocket;
+        listenSocket = SIZE_MAX;
+
+        int shutdownResult = shutdown((int) tmpListenSocket, SHUT_RDWR);
+
+        if (shutdownResult < 0) {
+          int lastError = errno;
+          //close((int) tmpListenSocket);
+          std::string errorMessage = "'shutdown' failed with result: '";
+          errorMessage += std::to_string(shutdownResult);
+          errorMessage += "' error: '";
+          errorMessage += std::to_string(lastError);
+          errorMessage += "'";
+          //throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+          log("'shutdown' warning " + errorMessage);
+        }
+
+        log("'shutdown' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
+
+        int closeSocketResult = close((int) tmpListenSocket);
+
+        if (closeSocketResult < 0) {
+          int lastError = errno;
+          std::string errorMessage = "'closesocket' failed with result: '";
+          errorMessage += std::to_string(closeSocketResult);
+          errorMessage += "' error: '";
+          errorMessage += std::to_string(lastError);
+          errorMessage += "'";
+          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+        }
+
+        log("'closesocket' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
       }
     } catch (...) {
       std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));

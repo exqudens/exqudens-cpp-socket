@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <climits>
 #include <string>
 #include <vector>
 #include <functional>
@@ -19,7 +20,7 @@ namespace exqudens {
       unsigned short port = 27015;
       std::function<void(const std::string&)> logHandler = {};
 
-      size_t connectSocket = ~0;
+      size_t connectSocket = SIZE_MAX;
 
     public:
 
@@ -39,7 +40,7 @@ namespace exqudens {
       void init();
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
-      int sendData(const std::vector<char>& value, const int& bufferSize = 1024);
+      int sendData(const std::vector<char>& buffer);
 
       EXQUDENS_SOCKET_FUNCTION_ATTRIBUTES
       std::vector<char> receiveData(const int& bufferSize = 1024);
