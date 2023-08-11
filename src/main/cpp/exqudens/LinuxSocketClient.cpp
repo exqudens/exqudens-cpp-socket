@@ -192,6 +192,7 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+          ////log("'close' warning " + errorMessage);
         }
 
         log("'closesocket' success. connectSocket: '" + std::to_string(tmpConnectSocket) + "'");

@@ -98,31 +98,33 @@ namespace exqudens {
     }
   }
 
-  int SocketClient::sendData(const std::vector<char>& value, const int& bufferSize) {
+  int SocketClient::sendData(const std::vector<char>& buffer) {
     try {
-      size_t internalBufferSize = bufferSize > 0 ? bufferSize : 1024;
-      for (size_t i = 0; i < value.size(); i += internalBufferSize) {
-        std::vector<char> outputBuffer = {};
-        for (size_t j = 0; j < internalBufferSize && i + j < value.size(); j++) {
-          outputBuffer.emplace_back(value.at(i + j));
-        }
-
-        int sendResult = send(connectSocket, outputBuffer.data(), (int) outputBuffer.size(), 0);
-
-        if (sendResult < 0) {
-          int lastError = WSAGetLastError();
-          destroy();
-          std::string errorMessage = "'send' failed with result: '";
-          errorMessage += std::to_string(sendResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(lastError);
-          errorMessage += "'";
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
-        }
-
-        log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
+      if (buffer.size() > INT_MAX) {
+        std::string errorMessage = "'buffer' size: '";
+        errorMessage += std::to_string(buffer.size());
+        errorMessage += "' is greater than max buffer size: '";
+        errorMessage += std::to_string(INT_MAX);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
       }
-      return 0;
+
+      int sendResult = send(connectSocket, buffer.data(), (int) buffer.size(), 0);
+
+      if (sendResult < 0) {
+        int lastError = WSAGetLastError();
+        destroy();
+        std::string errorMessage = "'send' failed with result: '";
+        errorMessage += std::to_string(sendResult);
+        errorMessage += "' error: '";
+        errorMessage += std::to_string(lastError);
+        errorMessage += "'";
+        throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+      }
+
+      log("'send' success. bytes: '" + std::to_string(sendResult) + "'");
+
+      return sendResult;
     } catch (...) {
       std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
     }
@@ -165,13 +167,14 @@ namespace exqudens {
 
         if (shutdownResult < 0) {
           int lastError = WSAGetLastError();
-          closesocket(tmpConnectSocket);
+          //closesocket(tmpConnectSocket);
           std::string errorMessage = "'shutdown' failed with result: '";
           errorMessage += std::to_string(shutdownResult);
           errorMessage += "' error: '";
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+          //throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+          log("'shutdown' warning " + errorMessage);
         }
 
         log("'shutdown' success. connectSocket: '" + std::to_string(tmpConnectSocket) + "'");
@@ -186,6 +189,7 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): " + errorMessage);
+          //log("'closesocket' warning " + errorMessage);
         }
 
         log("'closesocket' success. connectSocket: '" + std::to_string(tmpConnectSocket) + "'");
