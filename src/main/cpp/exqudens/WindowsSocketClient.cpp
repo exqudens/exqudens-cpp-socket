@@ -161,7 +161,7 @@ namespace exqudens {
         size_t tmpConnectSocket = connectSocket;
         connectSocket = INVALID_SOCKET;
 
-        int shutdownResult = shutdown(tmpConnectSocket, SD_SEND);
+        int shutdownResult = shutdown(tmpConnectSocket, SD_BOTH);
 
         if (shutdownResult < 0) {
           int lastError = WSAGetLastError();
