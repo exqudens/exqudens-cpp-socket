@@ -7,14 +7,13 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "3db5a119eb1167ae992e88a4ca554079"
+            EXPECTED_MD5 "45e1ffe4458069384764afcfd1e8a2c0"
             STATUS downloadStatus
         )
-        if("${downloadStatus}" STREQUAL "0;\"No error\"")
-            file(COPY "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/../common")
-        else()
+        if(NOT "${downloadStatus}" STREQUAL "0;\"No error\"")
             message(FATAL_ERROR "downloadStatus: '${downloadStatus}'")
         endif()
+        file(COPY "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/../common")
     endif()
 endblock()
 
@@ -23,27 +22,27 @@ include("${CMAKE_CURRENT_BINARY_DIR}/../common/util.cmake")
 string(REPLACE "." ";" PRESET_NAME_ELEMENTS "${PRESET_NAME}")
 if("msvc-16-x64" IN_LIST "PRESET_NAME_ELEMENTS")
     if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../common/msvc-16-x64-toolchain.cmake")
-        set_msvc_toolchain_content(TOOLCHAIN_CONTENT
+        set_msvc_toolchain(TOOLCHAIN_CONTENT
             PROCESSOR "x86_64"
             OS "${CMAKE_HOST_SYSTEM_NAME}"
             VERSION "16"
             HOST "x64"
             TARGET "x64"
             NO_CACHE "FALSE"
+            OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/../common/msvc-16-x64-toolchain.cmake"
         )
-        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/../common/msvc-16-x64-toolchain.cmake" "${TOOLCHAIN_CONTENT}")
     endif()
     find_program(CONAN_COMMAND NAMES "conan.exe" PATHS ENV CONAN_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
 elseif("gcc" IN_LIST PRESET_NAME_ELEMENTS)
     if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../common/gcc-toolchain.cmake")
         find_file(COMPILER_PATH NAMES "gcc" PATHS ENV GCC_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
-        set_gnu_toolchain_content(TOOLCHAIN_CONTENT
+        set_gnu_toolchain(TOOLCHAIN_CONTENT
             PROCESSOR "x86_64"
             OS "${CMAKE_HOST_SYSTEM_NAME}"
             PATH "${COMPILER_PATH}"
             NO_CACHE "FALSE"
+            OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/../common/gcc-toolchain.cmake"
         )
-        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/../common/gcc-toolchain.cmake" "${TOOLCHAIN_CONTENT}")
     endif()
     find_program(CONAN_COMMAND NAMES "conan" PATHS ENV CONAN_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
 endif()
