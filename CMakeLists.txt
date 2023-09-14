@@ -222,19 +222,15 @@ set("${PROJECT_NAME}-header-files"
     "src/main/cpp/exqudens/SocketServer.hpp"
     "src/main/cpp/exqudens/SocketClient.hpp"
 )
+set("${PROJECT_NAME}-source-files"
+    "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}Sockets.cpp"
+    "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketServer.cpp"
+    "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketClient.cpp"
+)
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
-    set("${PROJECT_NAME}-source-files"
-        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}Sockets.cpp"
-        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketServer.cpp"
-        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketClient.cpp"
-    )
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    set("${PROJECT_NAME}-source-files"
-        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}Sockets.cpp"
-        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketServer.cpp"
-        "src/main/cpp/exqudens/${CMAKE_SYSTEM_NAME}SocketClient.cpp"
-    )
+    #set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")
 endif()
 if("${INTERFACE_ONLY}")
     generate_interface_only_files(GENERATED_SOURCES

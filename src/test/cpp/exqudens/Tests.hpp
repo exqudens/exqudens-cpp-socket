@@ -17,7 +17,7 @@
 #include "TestThreadPool.hpp"
 #include "exqudens/Sockets.hpp"
 
-namespace exqudens::socket {
+namespace exqudens {
 
   class Tests: public testing::Test {
 
