@@ -90,7 +90,12 @@ set(CMAKE_FIND_USE_PACKAGE_ROOT_PATH FALSE)
 set(CMAKE_FIND_USE_CMAKE_PATH TRUE)
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG FALSE)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS FALSE)
+set(CMAKE_BUILD_RPATH "\$ORIGIN")
+set(CMAKE_INSTALL_RPATH "\$ORIGIN")
+set(CMAKE_SKIP_BUILD_RPATH TRUE)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
 set(CMAKE_CXX_STANDARD 20)
@@ -317,14 +322,6 @@ set_property(TARGET "${PROJECT_NAME}" PROPERTY "SOVERSION" "${PROJECT_VERSION}")
 set_property(TARGET "${PROJECT_NAME}" PROPERTY "INTERFACE_${PROJECT_NAME}_MAJOR_VERSION" "${PROJECT_VERSION}")
 set_property(TARGET "${PROJECT_NAME}" APPEND PROPERTY "COMPATIBLE_INTERFACE_STRING" "${PROJECT_NAME}_MAJOR_VERSION")
 install(
-    TARGETS "${PROJECT_NAME}"
-    EXPORT "${PROJECT_NAME}-targets"
-    INCLUDES DESTINATION "include"
-    RUNTIME DESTINATION "bin"
-    LIBRARY DESTINATION "lib"
-    ARCHIVE DESTINATION "lib"
-)
-install(
     EXPORT "${PROJECT_NAME}-targets"
     DESTINATION "cmake"
     NAMESPACE "${PROJECT_NAME}::"
@@ -364,6 +361,14 @@ else()
         PATTERN "*.hpp"
     )
 endif()
+install(
+    TARGETS "${PROJECT_NAME}"
+    EXPORT "${PROJECT_NAME}-targets"
+    INCLUDES DESTINATION "include"
+    RUNTIME DESTINATION "bin"
+    LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"
+)
 
 add_library("test-lib" STATIC
     "src/test/cpp/TestApplication.hpp"
@@ -431,17 +436,17 @@ set_target_properties("test-app" PROPERTIES
 if("${BUILD_SHARED_LIBS}")
     if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
         add_custom_command(TARGET "test-app"
-            POST_BUILD
+            PRE_BUILD
             COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},RUNTIME_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
             COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_PREFIX}/bin" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
             VERBATIM
             USES_TERMINAL
         )
-    elseif()
+    else()
         add_custom_command(TARGET "test-app"
-            POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},LIBRARY_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,LIBRARY_OUTPUT_DIRECTORY>"
-            COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_PREFIX}/lib" "$<TARGET_PROPERTY:test-app,LIBRARY_OUTPUT_DIRECTORY>"
+            PRE_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},LIBRARY_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_PREFIX}/lib" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
             VERBATIM
             USES_TERMINAL
         )
@@ -485,3 +490,9 @@ add_custom_target("conan-export"
     VERBATIM
     USES_TERMINAL
 )
+
+set_target_names(ALL_TARGETS "${CMAKE_CURRENT_SOURCE_DIR}")
+message("all-targets:")
+foreach(t IN LISTS ALL_TARGETS)
+    message("  ${t}")
+endforeach()
