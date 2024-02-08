@@ -1,0 +1,6 @@
+{
+  "loggers": [
+    { "exqudens.Tests": { "level": "DEBUG" } },
+    { "default": { "level": "ALL" } }
+  ]
+}

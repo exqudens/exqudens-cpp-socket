@@ -1,8 +1,9 @@
-#include "TestUtils.hpp"
-
-#include <algorithm>
 #include <stdexcept>
+#include <filesystem>
+#include <algorithm>
 #include <sstream>
+
+#include "TestUtils.hpp"
 
 std::vector<std::string> TestUtils::toStringVector(
     const std::exception& exception,
@@ -16,7 +17,7 @@ std::vector<std::string> TestUtils::toStringVector(
     return toStringVector(e, previous);
   } catch (...) {
     if (previous.empty()) {
-      previous.emplace_back(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + "): Empty stack!");
+      previous.emplace_back(std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + "): Empty stack!");
     }
     return previous;
   }
@@ -30,7 +31,7 @@ std::vector<std::string> TestUtils::toStackTrace(const std::exception& exception
     }
     return elements;
   } catch (...) {
-    std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
+    std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"));
   }
 }
 
@@ -46,6 +47,6 @@ std::string TestUtils::toString(const std::exception& exception) {
     }
     return out.str();
   } catch (...) {
-    std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + __FILE__ + ":" + std::to_string(__LINE__) + ")"));
+    std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"));
   }
 }

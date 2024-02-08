@@ -5,21 +5,27 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include <memory>
 #include <exception>
 #include <thread>
 #include <mutex>
-#include <iostream>
+#include <filesystem>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "TestLogging.hpp"
 #include "TestUtils.hpp"
 #include "TestThreadPool.hpp"
-#include "exqudens/Sockets.hpp"
+#include "exqudens/socket/Sockets.hpp"
 
 namespace exqudens {
 
   class Tests: public testing::Test {
+
+    protected:
+
+      inline static const char* LOGGER_ID = "exqudens.Tests";
 
     private:
 
@@ -27,9 +33,9 @@ namespace exqudens {
 
     public:
 
-      static void socketsLog(const std::string& message) {
+      static void socketsLog(const std::string& message, const unsigned short& level, const std::string& function, const std::string& file, const size_t& line) {
         const std::lock_guard<std::mutex> lock(mutex);
-        std::cout << "[SOCKETS] " << message << std::endl;
+        LOGGER(INFO, LOGGER_ID) << "[" + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
       }
 
       static std::vector<char> toBytes(const size_t& value) {
@@ -61,32 +67,15 @@ namespace exqudens {
         return result;
       }
 
-    protected:
-
-      static void SetUpTestSuite() {
-        Sockets::setLogHandler(&Tests::socketsLog);
-        Sockets::init();
-      }
-
-      static void TearDownTestSuite() {
-        Sockets::destroy();
-      }
-
   };
 
   TEST_F(Tests, test1) {
     try {
-      TestThreadPool pool(2, 2);
-
-      SocketServer server = Sockets::createServer();
-
-      std::future<void> future = pool.submit(&SocketServer::init, &server);
-
-      std::this_thread::sleep_for(std::chrono::seconds(3));
-
-      server.destroy();
-
-      future.get();
+      try {
+        Sockets::createServer();
+      } catch (const std::exception& exception) {
+        LOGGER(INFO, LOGGER_ID) << TestUtils::toString(exception);
+      }
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
@@ -94,29 +83,56 @@ namespace exqudens {
 
   TEST_F(Tests, test2) {
     try {
+      TestThreadPool pool(2, 2);
+
+      Sockets::setLogFunction(&Tests::socketsLog);
+      Sockets::init();
+      std::shared_ptr<SocketInterface> server = Sockets::createServer();
+
+      std::future<void> future = pool.submit(&SocketInterface::init, server.get());
+
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+
+      server->destroy();
+      Sockets::destroy();
+
+      future.get();
+    } catch (const std::exception& e) {
+      FAIL() << TestUtils::toString(e);
+    }
+  }
+
+  TEST_F(Tests, test3) {
+    try {
       TestThreadPool pool(1, 1);
-      SocketServer server = Sockets::createServer();
-      SocketClient client = Sockets::createClient();
+
+      Sockets::setLogFunction(&Tests::socketsLog);
+      Sockets::init();
+      std::shared_ptr<SocketInterface> server = Sockets::createServer();
+      server->setPort(27015);
+      std::shared_ptr<SocketInterface> client = Sockets::createClient();
+      client->setPort(27015);
+      client->setHost("localhost");
 
       std::future<void> future = pool.submit([&server]() {
-        server.init();
+        server->init();
 
         std::vector<char> receivedData;
         std::vector<char> buffer;
 
-        buffer = server.receiveData();
-        server.sendData(Tests::toBytes(buffer.size()));
+        buffer = server->receiveData();
+        server->sendData(Tests::toBytes(buffer.size()));
         receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
 
-        buffer = server.receiveData();
-        server.sendData(Tests::toBytes(buffer.size()));
+        buffer = server->receiveData();
+        server->sendData(Tests::toBytes(buffer.size()));
         receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
 
-        buffer = server.receiveData();
-        server.sendData(Tests::toBytes(buffer.size()));
+        buffer = server->receiveData();
+        server->sendData(Tests::toBytes(buffer.size()));
         receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
 
-        server.destroy();
+        server->destroy();
       });
 
       std::string data = std::string(1024, 'a') + std::string(1024, '1') + "ABC";
@@ -127,24 +143,25 @@ namespace exqudens {
 
       std::vector<char> receivedData;
 
-      client.init();
+      client->init();
 
-      client.sendData(parts.at(0));
-      buffer = client.receiveData();
+      client->sendData(parts.at(0));
+      buffer = client->receiveData();
       size = Tests::toSize(buffer);
       sizes.emplace_back(size);
 
-      client.sendData(parts.at(1));
-      buffer = client.receiveData();
+      client->sendData(parts.at(1));
+      buffer = client->receiveData();
       size = Tests::toSize(buffer);
       sizes.emplace_back(size);
 
-      client.sendData(parts.at(2));
-      buffer = client.receiveData();
+      client->sendData(parts.at(2));
+      buffer = client->receiveData();
       size = Tests::toSize(buffer);
       sizes.emplace_back(size);
 
-      client.destroy();
+      client->destroy();
+      Sockets::destroy();
 
       ASSERT_EQ(3, sizes.size());
       ASSERT_EQ(1024, sizes.at(0));
