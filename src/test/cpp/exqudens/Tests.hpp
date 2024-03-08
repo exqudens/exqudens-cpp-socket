@@ -17,7 +17,7 @@
 #include "TestLogging.hpp"
 #include "TestUtils.hpp"
 #include "TestThreadPool.hpp"
-#include "exqudens/socket/Sockets.hpp"
+#include "exqudens/socket/SocketFactory.hpp"
 
 namespace exqudens {
 
@@ -71,11 +71,18 @@ namespace exqudens {
 
   TEST_F(Tests, test1) {
     try {
+      SocketFactory socketFactory;
+      std::string message;
+
       try {
-        Sockets::createServer();
+        socketFactory.createSharedServer();
       } catch (const std::exception& exception) {
-        LOGGER(INFO, LOGGER_ID) << TestUtils::toString(exception);
+        message = TestUtils::toString(exception);
       }
+
+      LOGGER(INFO, LOGGER_ID) << message;
+
+      ASSERT_FALSE(message.empty());
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
@@ -84,17 +91,18 @@ namespace exqudens {
   TEST_F(Tests, test2) {
     try {
       TestThreadPool pool(2, 2);
+      SocketFactory socketFactory;
 
-      Sockets::setLogFunction(&Tests::socketsLog);
-      Sockets::init();
-      std::shared_ptr<SocketInterface> server = Sockets::createServer();
+      socketFactory.setLogFunction(&Tests::socketsLog);
+      socketFactory.init();
+      std::unique_ptr<ISocket> server = socketFactory.createUniqueServer();
 
-      std::future<void> future = pool.submit(&SocketInterface::init, server.get());
+      std::future<void> future = pool.submit(&ISocket::init, server.get());
 
       std::this_thread::sleep_for(std::chrono::seconds(3));
 
       server->destroy();
-      Sockets::destroy();
+      socketFactory.destroy();
 
       future.get();
     } catch (const std::exception& e) {
@@ -105,12 +113,13 @@ namespace exqudens {
   TEST_F(Tests, test3) {
     try {
       TestThreadPool pool(1, 1);
+      SocketFactory socketFactory;
 
-      Sockets::setLogFunction(&Tests::socketsLog);
-      Sockets::init();
-      std::shared_ptr<SocketInterface> server = Sockets::createServer();
+      socketFactory.setLogFunction(&Tests::socketsLog);
+      socketFactory.init();
+      std::shared_ptr<ISocket> server = socketFactory.createSharedServer();
       server->setPort(27015);
-      std::shared_ptr<SocketInterface> client = Sockets::createClient();
+      std::shared_ptr<ISocket> client = socketFactory.createSharedClient();
       client->setPort(27015);
       client->setHost("localhost");
 
@@ -161,7 +170,7 @@ namespace exqudens {
       sizes.emplace_back(size);
 
       client->destroy();
-      Sockets::destroy();
+      socketFactory.destroy();
 
       ASSERT_EQ(3, sizes.size());
       ASSERT_EQ(1024, sizes.at(0));

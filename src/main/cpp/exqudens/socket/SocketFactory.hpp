@@ -1,17 +1,13 @@
 #pragma once
 
-#include <climits>
-
-#include "exqudens/socket/ISocket.hpp"
+#include "exqudens/socket/ISocketFactory.hpp"
 
 namespace exqudens {
 
-  class EXQUDENS_SOCKET_EXPORT Socket : public ISocket {
+  class EXQUDENS_SOCKET_EXPORT SocketFactory : public ISocketFactory {
 
     protected:
 
-      unsigned short port = 27015;
-      std::string host = "localhost";
       std::function<void(
           const std::string&,
           const unsigned short&,
@@ -19,17 +15,9 @@ namespace exqudens {
           const std::string&,
           const size_t&
       )> logFunction = {};
-
-      size_t listenSocket = SIZE_MAX;
-      size_t transferSocket = SIZE_MAX;
+      bool initialized = false;
 
     public:
-
-      EXQUDENS_SOCKET_INLINE
-      void setPort(const unsigned short& value) override;
-
-      EXQUDENS_SOCKET_INLINE
-      void setHost(const std::string& value) override;
 
       EXQUDENS_SOCKET_INLINE
       void setLogFunction(
@@ -43,22 +31,28 @@ namespace exqudens {
       ) override;
 
       EXQUDENS_SOCKET_INLINE
+      bool isInitialized() override;
+
+      EXQUDENS_SOCKET_INLINE
       void init() override;
 
       EXQUDENS_SOCKET_INLINE
-      size_t sendData(const std::vector<char>& buffer) override;
+      std::shared_ptr<ISocket> createSharedServer() override;
 
       EXQUDENS_SOCKET_INLINE
-      std::vector<char> receiveData(const size_t& bufferSize) override;
+      std::unique_ptr<ISocket> createUniqueServer() override;
 
       EXQUDENS_SOCKET_INLINE
-      std::vector<char> receiveData() override;
+      std::shared_ptr<ISocket> createSharedClient() override;
+
+      EXQUDENS_SOCKET_INLINE
+      std::unique_ptr<ISocket> createUniqueClient() override;
 
       EXQUDENS_SOCKET_INLINE
       void destroy() override;
 
       EXQUDENS_SOCKET_INLINE
-      ~Socket() override = default;
+      ~SocketFactory() override = default;
 
     protected:
 

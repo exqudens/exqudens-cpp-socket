@@ -154,7 +154,13 @@ namespace exqudens {
     throw std::runtime_error(CALL_INFO + ": Not applicable!!!");
   }
 
-  void Socket::log(const std::string& message, const unsigned short& level, const std::string& function, const std::string& file, const size_t& line) {
+  void Socket::log(
+      const std::string& message,
+      const unsigned short& level,
+      const std::string& function,
+      const std::string& file,
+      const size_t& line
+  ) {
     try {
       if (logFunction) {
         logFunction(message, level, function, std::filesystem::path(file).filename().string(), line);

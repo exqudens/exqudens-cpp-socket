@@ -285,17 +285,18 @@ if(NOT "" STREQUAL "${NOT_FOUND_PACKAGE_NAMES}")
 endif()
 
 set("${PROJECT_NAME}-header-files"
-    "src/main/cpp/exqudens/socket/Sockets.hpp"
-    "src/main/cpp/exqudens/socket/SocketInterface.hpp"
+    "src/main/cpp/exqudens/socket/ISocket.hpp"
     "src/main/cpp/exqudens/socket/Socket.hpp"
     "src/main/cpp/exqudens/socket/SocketServer.hpp"
     "src/main/cpp/exqudens/socket/SocketClient.hpp"
+    "src/main/cpp/exqudens/socket/ISocketFactory.hpp"
+    "src/main/cpp/exqudens/socket/SocketFactory.hpp"
 )
 set("${PROJECT_NAME}-source-files"
-    "src/main/cpp/exqudens/socket/Sockets.cpp"
     "src/main/cpp/exqudens/socket/Socket.cpp"
     "src/main/cpp/exqudens/socket/SocketServer.cpp"
     "src/main/cpp/exqudens/socket/SocketClient.cpp"
+    "src/main/cpp/exqudens/socket/SocketFactory.cpp"
 )
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     set(CMAKE_CXX_STANDARD_LIBRARIES "${CMAKE_CXX_STANDARD_LIBRARIES} Ws2_32.lib")

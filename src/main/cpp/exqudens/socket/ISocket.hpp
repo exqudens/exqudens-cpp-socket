@@ -9,7 +9,7 @@
 
 namespace exqudens {
 
-  class EXQUDENS_SOCKET_EXPORT SocketInterface {
+  class EXQUDENS_SOCKET_EXPORT ISocket {
 
     public:
 
@@ -20,7 +20,15 @@ namespace exqudens {
       virtual void setHost(const std::string& value) = 0;
 
       EXQUDENS_SOCKET_INLINE
-      virtual void setLogFunction(const std::function<void(const std::string&, const unsigned short&, const std::string&, const std::string&, const size_t&)>& value) = 0;
+      virtual void setLogFunction(
+          const std::function<void(
+              const std::string&,
+              const unsigned short&,
+              const std::string&,
+              const std::string&,
+              const size_t&
+          )>& value
+      ) = 0;
 
       EXQUDENS_SOCKET_INLINE
       virtual void init() = 0;
@@ -38,7 +46,7 @@ namespace exqudens {
       virtual void destroy() = 0;
 
       EXQUDENS_SOCKET_INLINE
-      virtual ~SocketInterface() = default;
+      virtual ~ISocket() = default;
 
   };
 
