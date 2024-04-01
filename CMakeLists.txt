@@ -11,9 +11,9 @@ block()
     if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../common/${fileName}")
         file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}")
         file(DOWNLOAD
-            "https://raw.githubusercontent.com/exqudens/exqudens-cmake/1.0.0/src/main/cmake/${fileName}"
+            "https://raw.githubusercontent.com/exqudens/exqudens-cmake/1.0.1/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "34c59330d74bff19b14df3b843d82625"
+            EXPECTED_MD5 "d7dd546adf3830d9eb6cca7b0dda7d4e"
             STATUS downloadStatus
         )
         if(NOT "${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -34,7 +34,7 @@ if("msvc-16-x64-x64" IN_LIST "PRESET_NAME_ELEMENTS")
             VERSION "16"
             HOST "x64"
             TARGET "x64"
-            NO_CACHE "FALSE"
+            #NO_CACHE "FALSE"
             OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/../common/msvc-16-x64-x64-toolchain.cmake"
         )
     endif()
@@ -43,11 +43,11 @@ if("msvc-16-x64-x64" IN_LIST "PRESET_NAME_ELEMENTS")
     endif()
 elseif("gcc" IN_LIST PRESET_NAME_ELEMENTS)
     if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../common/gcc-toolchain.cmake")
-        find_file(COMPILER_PATH NAMES "gcc" PATHS ENV GCC_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
+        find_file(COMPILER_FILE NAMES "gcc" PATHS ENV GCC_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
         set_gnu_toolchain(TOOLCHAIN_CONTENT
             PROCESSOR "x86_64"
             OS "${CMAKE_HOST_SYSTEM_NAME}"
-            PATH "${COMPILER_PATH}"
+            PATH "${COMPILER_FILE}"
             #NO_CACHE "FALSE"
             OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/../common/gcc-toolchain.cmake"
         )
