@@ -1,6 +1,7 @@
 #pragma once
 
 #include <climits>
+#include <atomic>
 
 #include "exqudens/socket/ISocket.hpp"
 
@@ -20,8 +21,8 @@ namespace exqudens {
           const size_t&
       )> logFunction = {};
 
-      size_t listenSocket = SIZE_MAX;
-      size_t transferSocket = SIZE_MAX;
+      std::atomic<size_t> listenSocket = SIZE_MAX;
+      std::atomic<size_t> transferSocket = SIZE_MAX;
 
     public:
 

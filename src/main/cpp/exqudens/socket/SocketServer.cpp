@@ -56,27 +56,27 @@ namespace exqudens {
 
       log("'getaddrinfo' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      listenSocket = socket(addressInfo->ai_family, addressInfo->ai_socktype, addressInfo->ai_protocol);
+      listenSocket.store((size_t) socket(addressInfo->ai_family, addressInfo->ai_socktype, addressInfo->ai_protocol));
 
-      if (listenSocket == INVALID_SOCKET) {
+      if (listenSocket.load() == INVALID_SOCKET) {
         lastError = WSAGetLastError();
         freeaddrinfo(addressInfo);
         errorMessage = "'socket' failed with result: '";
-        errorMessage += std::to_string(listenSocket);
+        errorMessage += std::to_string(listenSocket.load());
         errorMessage += "' error: '";
         errorMessage += std::to_string(lastError);
         errorMessage += "'";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      log("'socket' success. listenSocket: '" + std::to_string(listenSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+      log("'socket' success. listenSocket: '" + std::to_string(listenSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      bindResult = bind(listenSocket, addressInfo->ai_addr, (int) addressInfo->ai_addrlen);
+      bindResult = bind(listenSocket.load(), addressInfo->ai_addr, (int) addressInfo->ai_addrlen);
 
       if (bindResult != 0) {
         lastError = WSAGetLastError();
         freeaddrinfo(addressInfo);
-        closesocket(listenSocket);
+        closesocket(listenSocket.load());
         errorMessage = "'bind' failed with result: '";
         errorMessage += std::to_string(bindResult);
         errorMessage += "' error: '";
@@ -89,11 +89,11 @@ namespace exqudens {
 
       log("'bind' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      listenResult = listen(listenSocket, SOMAXCONN);
+      listenResult = listen(listenSocket.load(), SOMAXCONN);
 
       if (listenResult != 0) {
         lastError = WSAGetLastError();
-        closesocket(listenSocket);
+        closesocket(listenSocket.load());
         errorMessage = "'listen' failed with result: '";
         errorMessage += std::to_string(listenResult);
         errorMessage += "' error: '";
@@ -104,27 +104,27 @@ namespace exqudens {
 
       log("'listen' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      transferSocket = accept(listenSocket, nullptr, nullptr);
+      transferSocket.store(accept(listenSocket.load(), nullptr, nullptr));
 
-      if (transferSocket == INVALID_SOCKET) {
-        if (listenSocket == INVALID_SOCKET) {
+      if (transferSocket.load() == INVALID_SOCKET) {
+        if (listenSocket.load() == INVALID_SOCKET) {
           return;
         }
         lastError = WSAGetLastError();
-        closesocket(listenSocket);
+        closesocket(listenSocket.load());
         errorMessage = "'accept' failed with result: '";
-        errorMessage += std::to_string(transferSocket);
+        errorMessage += std::to_string(transferSocket.load());
         errorMessage += "' error: '";
         errorMessage += std::to_string(lastError);
         errorMessage += "'";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      tmpListenSocket = listenSocket;
-      listenSocket = INVALID_SOCKET;
+      tmpListenSocket = listenSocket.load();
+      listenSocket.store(INVALID_SOCKET);
       closesocket(tmpListenSocket);
 
-      log("'accept' success. transferSocket: '" + std::to_string(transferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+      log("'accept' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
 #else
 
@@ -172,16 +172,16 @@ namespace exqudens {
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      listenSocket = socketResult;
+      listenSocket.store(socketResult);
 
-      log("'socket' success. listenSocket: '" + std::to_string(listenSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+      log("'socket' success. listenSocket: '" + std::to_string(listenSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      bindResult = bind((int) listenSocket, addressInfo->ai_addr, (int) addressInfo->ai_addrlen);
+      bindResult = bind((int) listenSocket.load(), addressInfo->ai_addr, (int) addressInfo->ai_addrlen);
 
       if (bindResult != 0) {
         lastError = errno;
         freeaddrinfo(addressInfo);
-        close((int) listenSocket);
+        close((int) listenSocket.load());
         errorMessage = "'bind' failed with result: '";
         errorMessage += std::to_string(bindResult);
         errorMessage += "' error: '";
@@ -194,11 +194,11 @@ namespace exqudens {
 
       log("'bind' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      listenResult = listen((int) listenSocket, SOMAXCONN);
+      listenResult = listen((int) listenSocket.load(), SOMAXCONN);
 
       if (listenResult != 0) {
         lastError = errno;
-        close((int) listenSocket);
+        close((int) listenSocket.load());
         errorMessage = "'listen' failed with result: '";
         errorMessage += std::to_string(listenResult);
         errorMessage += "' error: '";
@@ -209,14 +209,14 @@ namespace exqudens {
 
       log("'listen' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      acceptResult = accept((int) listenSocket, nullptr, nullptr);
+      acceptResult = accept((int) listenSocket.load(), nullptr, nullptr);
 
       if (acceptResult < 0) {
-        if (listenSocket == SIZE_MAX) {
+        if (listenSocket.load() == SIZE_MAX) {
           return;
         }
         lastError = errno;
-        close((int) listenSocket);
+        close((int) listenSocket.load());
         errorMessage = "'accept' failed with result: '";
         errorMessage += std::to_string(acceptResult);
         errorMessage += "' error: '";
@@ -225,13 +225,13 @@ namespace exqudens {
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      transferSocket = acceptResult;
+      transferSocket.store(acceptResult);
 
-      tmpListenSocket = listenSocket;
-      listenSocket = SIZE_MAX;
+      tmpListenSocket = listenSocket.load();
+      listenSocket.store(SIZE_MAX);
       close((int) tmpListenSocket);
 
-      log("'accept' success. transferSocket: '" + std::to_string(transferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+      log("'accept' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
 #endif
 
@@ -245,9 +245,9 @@ namespace exqudens {
 
 #if defined(_WIN64) || defined(_WIN32) || defined(_WINDOWS)
 
-      if (transferSocket != INVALID_SOCKET) {
-        size_t tmpTransferSocket = transferSocket;
-        transferSocket = INVALID_SOCKET;
+      if (transferSocket.load() != INVALID_SOCKET) {
+        size_t tmpTransferSocket = transferSocket.load();
+        transferSocket.store(INVALID_SOCKET);
 
         int shutdownResult = shutdown(tmpTransferSocket, SD_BOTH);
 
@@ -279,9 +279,9 @@ namespace exqudens {
 
         log("'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
       }
-      if (listenSocket != INVALID_SOCKET) {
-        size_t tmpListenSocket = listenSocket;
-        listenSocket = INVALID_SOCKET;
+      if (listenSocket.load() != INVALID_SOCKET) {
+        size_t tmpListenSocket = listenSocket.load();
+        listenSocket.store(INVALID_SOCKET);
 
         int shutdownResult = shutdown(tmpListenSocket, SD_BOTH);
 
@@ -317,9 +317,9 @@ namespace exqudens {
 
 #else
 
-      if (transferSocket != SIZE_MAX) {
-        size_t tmpTransferSocket = transferSocket;
-        transferSocket = SIZE_MAX;
+      if (transferSocket.load() != SIZE_MAX) {
+        size_t tmpTransferSocket = transferSocket.load();
+        transferSocket.store(SIZE_MAX);
 
         int shutdownResult = shutdown((int) tmpTransferSocket, SHUT_RDWR);
 
@@ -352,9 +352,9 @@ namespace exqudens {
 
         log("'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
       }
-      if (listenSocket != SIZE_MAX) {
-        size_t tmpListenSocket = listenSocket;
-        listenSocket = SIZE_MAX;
+      if (listenSocket.load() != SIZE_MAX) {
+        size_t tmpListenSocket = listenSocket.load();
+        listenSocket.store(SIZE_MAX);
 
         int shutdownResult = shutdown((int) tmpListenSocket, SHUT_RDWR);
 

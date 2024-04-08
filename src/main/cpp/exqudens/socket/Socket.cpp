@@ -50,7 +50,7 @@ namespace exqudens {
 
 #if defined(_WIN64) || defined(_WIN32) || defined(_WINDOWS)
 
-      int sendResult = send(transferSocket, buffer.data(), (int) buffer.size(), 0);
+      int sendResult = send(transferSocket.load(), buffer.data(), (int) buffer.size(), 0);
 
       if (sendResult < 0) {
         int lastError = WSAGetLastError();
@@ -69,7 +69,7 @@ namespace exqudens {
 
 #else
 
-      ssize_t sendResult = send((int) transferSocket, buffer.data(), (int) buffer.size(), 0);
+      ssize_t sendResult = send((int) transferSocket.load(), buffer.data(), (int) buffer.size(), 0);
 
       if (sendResult < 0) {
         int lastError = errno;
@@ -100,7 +100,7 @@ namespace exqudens {
 
 #if defined(_WIN64) || defined(_WIN32) || defined(_WINDOWS)
 
-      int recvResult = recv(transferSocket, buffer.data(), (int) buffer.size(), 0);
+      int recvResult = recv(transferSocket.load(), buffer.data(), (int) buffer.size(), 0);
 
       if (recvResult < 0) {
         int lastError = WSAGetLastError();
@@ -120,7 +120,7 @@ namespace exqudens {
 
 #else
 
-      ssize_t recvResult = recv((int) transferSocket, buffer.data(), (int) buffer.size(), 0);
+      ssize_t recvResult = recv((int) transferSocket.load(), buffer.data(), (int) buffer.size(), 0);
 
       if (recvResult < 0) {
         int lastError = errno;

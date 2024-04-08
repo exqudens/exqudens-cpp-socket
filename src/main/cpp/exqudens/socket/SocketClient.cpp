@@ -56,25 +56,25 @@ namespace exqudens {
       log("'getaddrinfo' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
       for(addrinfo* i = addressInfo; i != nullptr; i = i->ai_next) {
-        transferSocket = socket(i->ai_family, i->ai_socktype, i->ai_protocol);
+        transferSocket.store(socket(i->ai_family, i->ai_socktype, i->ai_protocol));
 
-        if (transferSocket == INVALID_SOCKET) {
+        if (transferSocket.load() == INVALID_SOCKET) {
           lastError = WSAGetLastError();
           errorMessage = "'socket' failed with result: '";
-          errorMessage += std::to_string(transferSocket);
+          errorMessage += std::to_string(transferSocket.load());
           errorMessage += "' error: '";
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(CALL_INFO + ": " + errorMessage);
         }
 
-        log("'socket' success. transferSocket: '" + std::to_string(transferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        log("'socket' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-        connectResult = connect(transferSocket, i->ai_addr, (int) i->ai_addrlen);
+        connectResult = connect(transferSocket.load(), i->ai_addr, (int) i->ai_addrlen);
 
         if (connectResult < 0) {
-          closesocket(transferSocket);
-          transferSocket = INVALID_SOCKET;
+          closesocket(transferSocket.load());
+          transferSocket.store(INVALID_SOCKET);
           continue;
         }
 
@@ -83,9 +83,9 @@ namespace exqudens {
 
       freeaddrinfo(addressInfo);
 
-      if (transferSocket == INVALID_SOCKET) {
+      if (transferSocket.load() == INVALID_SOCKET) {
         errorMessage = "'socket' failed with result: '";
-        errorMessage += std::to_string(transferSocket);
+        errorMessage += std::to_string(transferSocket.load());
         errorMessage += "'";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
@@ -141,15 +141,15 @@ namespace exqudens {
           throw std::runtime_error(CALL_INFO + ": " + errorMessage);
         }
 
-        transferSocket = socketResult;
+        transferSocket.store(socketResult);
 
-        log("'socket' success. transferSocket: '" + std::to_string(transferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        log("'socket' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-        connectResult = connect((int) transferSocket, i->ai_addr, (int) i->ai_addrlen);
+        connectResult = connect((int) transferSocket.load(), i->ai_addr, (int) i->ai_addrlen);
 
         if (connectResult < 0) {
-          close((int) transferSocket);
-          transferSocket = SIZE_MAX;
+          close((int) transferSocket.load());
+          transferSocket.store(SIZE_MAX);
           continue;
         }
 
@@ -158,9 +158,9 @@ namespace exqudens {
 
       freeaddrinfo(addressInfo);
 
-      if (transferSocket == SIZE_MAX) {
+      if (transferSocket.load() == SIZE_MAX) {
         errorMessage = "'socket' failed with result: '";
-        errorMessage += std::to_string(transferSocket);
+        errorMessage += std::to_string(transferSocket.load());
         errorMessage += "'";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
@@ -188,9 +188,9 @@ namespace exqudens {
 
 #if defined(_WIN64) || defined(_WIN32) || defined(_WINDOWS)
 
-      if (transferSocket != INVALID_SOCKET) {
-        size_t tmpTransferSocket = transferSocket;
-        transferSocket = INVALID_SOCKET;
+      if (transferSocket.load() != INVALID_SOCKET) {
+        size_t tmpTransferSocket = transferSocket.load();
+        transferSocket.store(INVALID_SOCKET);
 
         int shutdownResult = shutdown(tmpTransferSocket, SD_BOTH);
 
@@ -226,9 +226,9 @@ namespace exqudens {
 
 #else
 
-      if (transferSocket != SIZE_MAX) {
-        size_t tmpTransferSocket = transferSocket;
-        transferSocket = SIZE_MAX;
+      if (transferSocket.load() != SIZE_MAX) {
+        size_t tmpTransferSocket = transferSocket.load();
+        transferSocket.store(SIZE_MAX);
 
         int shutdownResult = shutdown((int) tmpTransferSocket, SHUT_WR);
 
