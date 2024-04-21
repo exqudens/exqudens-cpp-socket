@@ -37,25 +37,27 @@ namespace exqudens {
 
   void SocketFactory::init() {
     try {
+      if (!initialized) {
 
 #if defined(_WIN64) || defined(_WIN32) || defined(_WINDOWS)
 
-      WSADATA wsaData;
+        WSADATA wsaData;
 
-      int wsaStartupResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+        int wsaStartupResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-      if (wsaStartupResult != 0) {
-        std::string errorMessage = "'WSAStartup' failed with result: '";
-        errorMessage += std::to_string(wsaStartupResult);
-        errorMessage += "'";
-        throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-      }
+        if (wsaStartupResult != 0) {
+          std::string errorMessage = "'WSAStartup' failed with result: '";
+          errorMessage += std::to_string(wsaStartupResult);
+          errorMessage += "'";
+          throw std::runtime_error(CALL_INFO + ": " + errorMessage);
+        }
 
 #endif
 
-      initialized = true;
+        log("'init' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-      log("'init' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        initialized = true;
+      }
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
     }
@@ -146,9 +148,9 @@ namespace exqudens {
 
 #endif
 
-        initialized = false;
-
         log("'destroy' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+
+        initialized = false;
       }
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));

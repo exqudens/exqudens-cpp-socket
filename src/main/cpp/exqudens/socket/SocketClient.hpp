@@ -22,7 +22,7 @@ namespace exqudens {
       void destroy() override;
 
       EXQUDENS_SOCKET_INLINE
-      ~SocketClient() override = default;
+      ~SocketClient() noexcept override = default;
 
   };
 

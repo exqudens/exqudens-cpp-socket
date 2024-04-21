@@ -15,7 +15,7 @@ namespace exqudens {
       void destroy() override;
 
       EXQUDENS_SOCKET_INLINE
-      ~SocketServer() override = default;
+      ~SocketServer() noexcept override = default;
 
   };
 

@@ -59,7 +59,7 @@ namespace exqudens {
       void destroy() override;
 
       EXQUDENS_SOCKET_INLINE
-      ~Socket() override = default;
+      ~Socket() noexcept override = default;
 
     protected:
 

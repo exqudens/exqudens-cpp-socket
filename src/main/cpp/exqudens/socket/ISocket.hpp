@@ -14,10 +14,14 @@ namespace exqudens {
     public:
 
       EXQUDENS_SOCKET_INLINE
-      virtual void setPort(const unsigned short& value) = 0;
+      virtual void setPort(
+          const unsigned short& value
+      ) = 0;
 
       EXQUDENS_SOCKET_INLINE
-      virtual void setHost(const std::string& value) = 0;
+      virtual void setHost(
+          const std::string& value
+      ) = 0;
 
       EXQUDENS_SOCKET_INLINE
       virtual void setLogFunction(
@@ -34,10 +38,14 @@ namespace exqudens {
       virtual void init() = 0;
 
       EXQUDENS_SOCKET_INLINE
-      virtual size_t sendData(const std::vector<char>& buffer) = 0;
+      virtual size_t sendData(
+          const std::vector<char>& buffer
+      ) = 0;
 
       EXQUDENS_SOCKET_INLINE
-      virtual std::vector<char> receiveData(const size_t& bufferSize) = 0;
+      virtual std::vector<char> receiveData(
+          const size_t& bufferSize
+      ) = 0;
 
       EXQUDENS_SOCKET_INLINE
       virtual std::vector<char> receiveData() = 0;
@@ -46,7 +54,7 @@ namespace exqudens {
       virtual void destroy() = 0;
 
       EXQUDENS_SOCKET_INLINE
-      virtual ~ISocket() = default;
+      virtual ~ISocket() noexcept = default;
 
   };
 

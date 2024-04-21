@@ -52,7 +52,7 @@ namespace exqudens {
       void destroy() override;
 
       EXQUDENS_SOCKET_INLINE
-      ~SocketFactory() override = default;
+      ~SocketFactory() noexcept override = default;
 
     protected:
 

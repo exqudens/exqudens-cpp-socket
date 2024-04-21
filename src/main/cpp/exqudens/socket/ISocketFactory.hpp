@@ -46,7 +46,7 @@ namespace exqudens {
       virtual void destroy() = 0;
 
       EXQUDENS_SOCKET_INLINE
-      virtual ~ISocketFactory() = default;
+      virtual ~ISocketFactory() noexcept = default;
 
   };
 

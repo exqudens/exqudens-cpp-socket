@@ -114,7 +114,7 @@ namespace exqudens {
       }  else if (recvResult == 0) {
         log("'recv' success. bytes: '" + std::to_string(recvResult) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
       } else {
-        buffer = std::vector(buffer.begin(), buffer.begin() + recvResult);
+        buffer.resize(recvResult);
         log("'recv' success. bytes: '" + std::to_string(recvResult) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
       }
 
@@ -134,7 +134,7 @@ namespace exqudens {
       }  else if (recvResult == 0) {
         log("'recv' success. bytes: '" + std::to_string(recvResult) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
       } else {
-        buffer = std::vector(buffer.begin(), buffer.begin() + recvResult);
+        buffer.resize(recvResult);
         log("'recv' success. bytes: '" + std::to_string(recvResult) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
       }
 
