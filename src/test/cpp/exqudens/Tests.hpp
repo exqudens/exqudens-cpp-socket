@@ -35,7 +35,7 @@ namespace exqudens {
 
       static void socketsLog(const std::string& message, const unsigned short& level, const std::string& function, const std::string& file, const size_t& line) {
         const std::lock_guard<std::mutex> lock(mutex);
-        LOGGER(INFO, LOGGER_ID) << "[" + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        CLOG(INFO, LOGGER_ID) << "[" + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
       }
 
       static std::vector<char> toBytes(const size_t& value) {
@@ -80,7 +80,7 @@ namespace exqudens {
         message = TestUtils::toString(exception);
       }
 
-      LOGGER(INFO, LOGGER_ID) << message;
+      CLOG(INFO, LOGGER_ID) << message;
 
       ASSERT_FALSE(message.empty());
     } catch (const std::exception& e) {

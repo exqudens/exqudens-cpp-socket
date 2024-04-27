@@ -426,12 +426,14 @@ install(
 
 if(NOT "${SKIP_TEST}")
     add_library("test-lib" STATIC
-        "src/test/cpp/TestApplication.hpp"
-        "src/test/cpp/TestApplication.cpp"
-        "src/test/cpp/TestLogging.hpp"
-        "src/test/cpp/TestLogging.cpp"
+        "src/test/cpp/TestConfiguration.hpp"
+        "src/test/cpp/TestConfiguration.cpp"
         "src/test/cpp/TestUtils.hpp"
         "src/test/cpp/TestUtils.cpp"
+        "src/test/cpp/TestLogging.hpp"
+        "src/test/cpp/TestLogging.cpp"
+        "src/test/cpp/TestApplication.hpp"
+        "src/test/cpp/TestApplication.cpp"
         "src/test/cpp/TestThreadPool.hpp"
         "src/test/cpp/TestThreadPool.cpp"
         "src/test/cpp/exqudens/Tests.hpp"
@@ -498,6 +500,7 @@ if(NOT "${SKIP_TEST}")
                 PRE_BUILD
                 COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},RUNTIME_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
                 COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_TEST_PREFIX}/bin" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
                 USES_TERMINAL
                 VERBATIM
             )
@@ -506,6 +509,7 @@ if(NOT "${SKIP_TEST}")
                 PRE_BUILD
                 COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_PROPERTY:${PROJECT_NAME},LIBRARY_OUTPUT_DIRECTORY>" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
                 COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CONAN_INSTALL_TEST_PREFIX}/lib" "$<TARGET_PROPERTY:test-app,RUNTIME_OUTPUT_DIRECTORY>"
+                WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
                 USES_TERMINAL
                 VERBATIM
             )
@@ -513,7 +517,7 @@ if(NOT "${SKIP_TEST}")
     endif()
 
     gtest_discover_tests("test-app"
-        EXTRA_ARGS "--logging-config" "${PROJECT_SOURCE_DIR}/src/test/resources/logging-config.json"
+        EXTRA_ARGS "--logging-config" "${PROJECT_SOURCE_DIR}/src/test/resources/logging-config.txt"
         WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/test/bin"
         PROPERTIES XML_OUTPUT_DIR "${PROJECT_BINARY_DIR}/test/report/xml"
                    #ENVIRONMENT "PARENT_PATH=;PATH="

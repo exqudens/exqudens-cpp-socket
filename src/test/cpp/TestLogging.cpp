@@ -1,64 +1,80 @@
-#include <cstddef>
 #include <filesystem>
-#include <fstream>
-#include <sstream>
 #include <stdexcept>
-#include <iostream>
-
-#include <nlohmann/json.hpp>
 
 #include "TestLogging.hpp"
 INITIALIZE_EASYLOGGINGPP
 
-void TestLogging::config(const std::string& value) {
+#define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
+
+std::string TestLogging::defaultConfig() {
   try {
-    el::Configurations loggingDefaultConfig;
+    std::string value;
 
-    loggingDefaultConfig.setToDefault();
+    value += "* GLOBAL:\n";
+    value += "  ENABLED              = true\n";
+    value += "  TO_STANDARD_OUTPUT   = true\n";
+    value += "  TO_FILE              = false\n";
+    value += "  FILENAME             = \"log.txt\"\n";
+    value += "  MAX_LOG_FILE_SIZE    = 2097152 ## 2MB\n";
+    value += "  LOG_FLUSH_THRESHOLD  = 1 ## Flush after every 1 log\n";
+    value += "  FORMAT               = \"%datetime %level [%logger] %msg\"\n";
+    value += "  MILLISECONDS_WIDTH   = 3\n";
+    value += "  PERFORMANCE_TRACKING = false\n";
 
-    loggingDefaultConfig.setGlobally(el::ConfigurationType::Enabled, "true");
-    loggingDefaultConfig.setGlobally(el::ConfigurationType::ToFile, "true");
-    loggingDefaultConfig.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
-    //loggingConfig.setGlobally(el::ConfigurationType::Format, "true");
-    //loggingConfig.setGlobally(el::ConfigurationType::Filename, "true");
-    //loggingConfig.setGlobally(el::ConfigurationType::MillisecondsWidth, "true");
-    loggingDefaultConfig.setGlobally(el::ConfigurationType::PerformanceTracking, "false");
-    //loggingConfig.setGlobally(el::ConfigurationType::MaxLogFileSize, "true");
-    //loggingConfig.setGlobally(el::ConfigurationType::LogFlushThreshold, "true");
-
-    el::Loggers::setDefaultConfigurations(loggingDefaultConfig, true);
-
-    //el::Loggers::reconfigureLogger("default", loggingDefaultConfig);
-
-    //el::Loggers::getLogger("exqudens.Tests");
-
-    if (value.ends_with(".json")) {
-      std::filesystem::path file(value);
-      if (std::filesystem::exists(file)) {
-        std::string content;
-        std::ifstream inputStream(file.make_preferred().string(), std::ios::binary);
-        if (inputStream.is_open()) {
-          std::ostringstream buffer;
-          buffer << inputStream.rdbuf();
-          content = buffer.str();
-          inputStream.close();
-        } else {
-          throw std::runtime_error(std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + "): Failed to open file: '" + file.make_preferred().string() + "'");
-        }
-        if (!content.empty()) {
-          nlohmann::json json = nlohmann::json::parse(content);
-          for (size_t i = 0; i < json.at("loggers").size(); i++) {
-            nlohmann::json logger = json.at("loggers").at(i);
-            el::Configurations loggingConfig;
-            loggingConfig.set(el::Level::Info, el::ConfigurationType::Enabled, "false");
-          }
-          //json["loggers"].is_array();
-          //std::string value_1 = json["log"];
-          //std::cout << "value_1: '" + value_1 + "'" << std::endl;
-        }
-      }
-    }
+    return value;
   } catch (...) {
-    std::throw_with_nested(std::runtime_error(std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"));
+    std::throw_with_nested(std::runtime_error(CALL_INFO));
   }
 }
+
+std::string TestLogging::defaultGlobalConfig() {
+  try {
+    std::string value;
+
+    value += "## \"default\" logger configurations\n";
+    value += "-- default\n";
+    value += defaultConfig();
+
+    return value;
+  } catch (...) {
+    std::throw_with_nested(std::runtime_error(CALL_INFO));
+  }
+}
+
+void TestLogging::config(const std::string& filePath, const std::string& workingDir) {
+  try {
+    std::filesystem::path file;
+
+    if (workingDir.empty()) {
+      file = std::filesystem::path(filePath);
+    } else {
+      file = std::filesystem::path(std::filesystem::path(workingDir) / std::filesystem::path(filePath));
+    }
+
+    if (!std::filesystem::exists(file)) {
+      throw std::runtime_error(CALL_INFO + ": Not exists: '" + file.generic_string() + "'");
+    }
+
+    el::Configurations configurations;
+
+    configurations.setToDefault();
+
+    configurations.setGlobally(el::ConfigurationType::Enabled, "true");
+    configurations.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
+    configurations.setGlobally(el::ConfigurationType::ToFile, "false");
+    configurations.setGlobally(el::ConfigurationType::Filename, "log.txt");
+    configurations.setGlobally(el::ConfigurationType::MaxLogFileSize, "2097152");
+    configurations.setGlobally(el::ConfigurationType::LogFlushThreshold, "1");
+    configurations.setGlobally(el::ConfigurationType::Format, "%datetime %level [%logger] %msg");
+    configurations.setGlobally(el::ConfigurationType::MillisecondsWidth, "3");
+    configurations.setGlobally(el::ConfigurationType::PerformanceTracking, "false");
+
+    el::Loggers::setDefaultConfigurations(configurations, true);
+
+    el::Loggers::configureFromGlobal(file.generic_string().c_str());
+  } catch (...) {
+    std::throw_with_nested(std::runtime_error(CALL_INFO));
+  }
+}
+
+#undef CALL_INFO

@@ -2,22 +2,21 @@
 
 #include <string>
 
+#define ELPP_NO_DEFAULT_LOG_FILE
 #include <easylogging++.h>
-
-#ifndef DEFAULT_LOGGER
-#  define DEFAULT_LOGGER(level) LOG(level)
-#endif /* DEFAULT_LOGGER */
-
-#ifndef LOGGER
-#  define LOGGER(level, id) if (el::Loggers::getLogger(id) != nullptr) CLOG(level, id)
-#endif /* LOGGER */
 
 class TestLogging {
 
   friend class TestApplication;
 
+  public:
+
+    static std::string defaultConfig();
+
+    static std::string defaultGlobalConfig();
+
   private:
 
-    static void config(const std::string& value);
+    static void config(const std::string& file, const std::string& workingDir = "");
 
 };
