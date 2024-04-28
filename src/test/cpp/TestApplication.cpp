@@ -16,7 +16,7 @@
 #include "TestUtils.hpp"
 
 // include test files
-#include "exqudens/Tests.hpp"
+#include "exqudens/SocketTests.hpp"
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
 #define LOGGING_CONFIG std::string("--logging-config")

@@ -2,6 +2,7 @@
 
 #include <climits>
 #include <atomic>
+#include <utility>
 
 #include "exqudens/socket/ISocket.hpp"
 
@@ -62,6 +63,21 @@ namespace exqudens {
       ~Socket() noexcept override = default;
 
     protected:
+
+      EXQUDENS_SOCKET_INLINE
+      virtual int getLastError();
+
+      EXQUDENS_SOCKET_INLINE
+      virtual std::pair<size_t, std::string> openSocket(const int& family, const int& type, const int& protocol);
+
+      EXQUDENS_SOCKET_INLINE
+      virtual std::pair<size_t, std::string> acceptSocket(const size_t& value);
+
+      EXQUDENS_SOCKET_INLINE
+      virtual int closeSocket(const size_t& value);
+
+      EXQUDENS_SOCKET_INLINE
+      virtual int shutdownSocket(const size_t& value);
 
       EXQUDENS_SOCKET_INLINE
       virtual void log(

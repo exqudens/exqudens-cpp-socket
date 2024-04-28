@@ -436,7 +436,7 @@ if(NOT "${SKIP_TEST}")
         "src/test/cpp/TestApplication.cpp"
         "src/test/cpp/TestThreadPool.hpp"
         "src/test/cpp/TestThreadPool.cpp"
-        "src/test/cpp/exqudens/Tests.hpp"
+        "src/test/cpp/exqudens/SocketTests.hpp"
     )
     target_include_directories("test-lib" PUBLIC
         "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/test/cpp>"

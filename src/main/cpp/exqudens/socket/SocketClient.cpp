@@ -10,6 +10,8 @@
 #else
 #include <netdb.h>
 #include <unistd.h>
+
+typedef int SOCKET;
 #endif
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
@@ -29,14 +31,12 @@ namespace exqudens {
   void SocketClient::init() {
     try {
 
-#if defined(_WIN64) || defined(_WIN32) || defined(_WINDOWS)
-
       std::string errorMessage;
       int lastError;
       addrinfo hints = {};
       addrinfo* addressInfo = nullptr;
       int getAddrInfoResult;
-      //size_t transferSocket;
+      std::pair<size_t, std::string> socketResult = {SIZE_MAX, "-1"};
       int connectResult;
 
       std::memset(&hints, 0, sizeof(hints));
@@ -56,99 +56,26 @@ namespace exqudens {
       log("'getaddrinfo' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
       for(addrinfo* i = addressInfo; i != nullptr; i = i->ai_next) {
-        transferSocket.store(socket(i->ai_family, i->ai_socktype, i->ai_protocol));
+        socketResult = openSocket(i->ai_family, i->ai_socktype, i->ai_protocol);
 
-        if (transferSocket.load() == INVALID_SOCKET) {
-          lastError = WSAGetLastError();
+        if (socketResult.first == SIZE_MAX) {
+          lastError = getLastError();
           errorMessage = "'socket' failed with result: '";
-          errorMessage += std::to_string(transferSocket.load());
+          errorMessage += socketResult.second;
           errorMessage += "' error: '";
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(CALL_INFO + ": " + errorMessage);
         }
 
-        log("'socket' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-
-        connectResult = connect(transferSocket.load(), i->ai_addr, (int) i->ai_addrlen);
-
-        if (connectResult < 0) {
-          closesocket(transferSocket.load());
-          transferSocket.store(INVALID_SOCKET);
-          continue;
-        }
-
-        break;
-      }
-
-      freeaddrinfo(addressInfo);
-
-      if (transferSocket.load() == INVALID_SOCKET) {
-        errorMessage = "'socket' failed with result: '";
-        errorMessage += std::to_string(transferSocket.load());
-        errorMessage += "'";
-        throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-      }
-
-      log("'socket' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-
-      if (connectResult < 0) {
-        errorMessage = "'connect' failed with result: '";
-        errorMessage += std::to_string(connectResult);
-        errorMessage += "'";
-        throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-      }
-
-      log("'connect' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-
-#else
-
-      std::string errorMessage;
-      int lastError;
-      addrinfo hints = {};
-      addrinfo* addressInfo = nullptr;
-      int getAddrInfoResult;
-      int socketResult;
-      //size_t transferSocket;
-      int connectResult;
-
-      std::memset(&hints, 0, sizeof(hints));
-      hints.ai_family = AF_UNSPEC;
-      hints.ai_socktype = SOCK_STREAM;
-      hints.ai_protocol = IPPROTO_TCP;
-
-      getAddrInfoResult = getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &addressInfo);
-
-      if (getAddrInfoResult != 0) {
-        errorMessage = "'getaddrinfo' failed with result: '";
-        errorMessage += std::to_string(getAddrInfoResult);
-        errorMessage += "'";
-        throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-      }
-
-      log("'getaddrinfo' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-
-      for(addrinfo* i = addressInfo; i != nullptr; i = i->ai_next) {
-        socketResult = socket(i->ai_family, i->ai_socktype, i->ai_protocol);
-
-        if (socketResult < 0) {
-          lastError = errno;
-          errorMessage = "'socket' failed with result: '";
-          errorMessage += std::to_string(socketResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(lastError);
-          errorMessage += "'";
-          throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-        }
-
-        transferSocket.store(socketResult);
+        transferSocket.store(socketResult.first);
 
         log("'socket' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-        connectResult = connect((int) transferSocket.load(), i->ai_addr, (int) i->ai_addrlen);
+        connectResult = connect((SOCKET) transferSocket.load(), i->ai_addr, (int) i->ai_addrlen);
 
         if (connectResult < 0) {
-          close((int) transferSocket.load());
+          closeSocket(transferSocket.load());
           transferSocket.store(SIZE_MAX);
           continue;
         }
@@ -176,8 +103,6 @@ namespace exqudens {
 
       log("'connect' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-#endif
-
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
     }
@@ -185,56 +110,15 @@ namespace exqudens {
 
   void SocketClient::destroy() {
     try {
-
-#if defined(_WIN64) || defined(_WIN32) || defined(_WINDOWS)
-
-      if (transferSocket.load() != INVALID_SOCKET) {
-        size_t tmpTransferSocket = transferSocket.load();
-        transferSocket.store(INVALID_SOCKET);
-
-        int shutdownResult = shutdown(tmpTransferSocket, SD_BOTH);
-
-        if (shutdownResult < 0) {
-          int lastError = WSAGetLastError();
-          //closesocket(tmpTransferSocket);
-          std::string errorMessage = "'shutdown' failed with result: '";
-          errorMessage += std::to_string(shutdownResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(lastError);
-          errorMessage += "'";
-          //throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          log("'shutdown' warning " + errorMessage, LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-        }
-
-        log("'shutdown' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-
-        int closeSocketResult = closesocket(tmpTransferSocket);
-
-        if (closeSocketResult < 0) {
-          int lastError = WSAGetLastError();
-          std::string errorMessage = "'closesocket' failed with result: '";
-          errorMessage += std::to_string(closeSocketResult);
-          errorMessage += "' error: '";
-          errorMessage += std::to_string(lastError);
-          errorMessage += "'";
-          throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          //log("'closesocket' warning " + errorMessage, LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-        }
-
-        log("'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
-      }
-
-#else
-
       if (transferSocket.load() != SIZE_MAX) {
         size_t tmpTransferSocket = transferSocket.load();
         transferSocket.store(SIZE_MAX);
 
-        int shutdownResult = shutdown((int) tmpTransferSocket, SHUT_WR);
+        int shutdownResult = shutdownSocket(tmpTransferSocket);
 
         if (shutdownResult < 0) {
-          int lastError = errno;
-          //close((int) tmpTransferSocket);
+          int lastError = getLastError();
+          //closeSocket(tmpTransferSocket);
           std::string errorMessage = "'shutdown' failed with result: '";
           errorMessage += std::to_string(shutdownResult);
           errorMessage += "' error: '";
@@ -246,10 +130,10 @@ namespace exqudens {
 
         log("'shutdown' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
 
-        int closeSocketResult = close((int) tmpTransferSocket);
+        int closeSocketResult = closeSocket(tmpTransferSocket);
 
         if (closeSocketResult < 0) {
-          int lastError = errno;
+          int lastError = getLastError();
           std::string errorMessage = "'closesocket' failed with result: '";
           errorMessage += std::to_string(closeSocketResult);
           errorMessage += "' error: '";
@@ -261,9 +145,6 @@ namespace exqudens {
 
         log("'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
       }
-
-#endif
-
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
     }

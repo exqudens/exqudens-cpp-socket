@@ -21,7 +21,7 @@
 
 namespace exqudens {
 
-  class Tests: public testing::Test {
+  class SocketTests: public testing::Test {
 
     protected:
 
@@ -69,7 +69,7 @@ namespace exqudens {
 
   };
 
-  TEST_F(Tests, test1) {
+  TEST_F(SocketTests, test1) {
     try {
       SocketFactory socketFactory;
       std::string message;
@@ -88,12 +88,12 @@ namespace exqudens {
     }
   }
 
-  TEST_F(Tests, test2) {
+  TEST_F(SocketTests, test2) {
     try {
       TestThreadPool pool(2, 2);
       SocketFactory socketFactory;
 
-      socketFactory.setLogFunction(&Tests::socketsLog);
+      socketFactory.setLogFunction(&SocketTests::socketsLog);
       socketFactory.init();
       std::unique_ptr<ISocket> server = socketFactory.createUniqueServer();
 
@@ -110,12 +110,12 @@ namespace exqudens {
     }
   }
 
-  TEST_F(Tests, test3) {
+  TEST_F(SocketTests, test3) {
     try {
       TestThreadPool pool(1, 1);
       SocketFactory socketFactory;
 
-      socketFactory.setLogFunction(&Tests::socketsLog);
+      socketFactory.setLogFunction(&SocketTests::socketsLog);
       socketFactory.init();
       std::shared_ptr<ISocket> server = socketFactory.createSharedServer();
       server->setPort(27015);
@@ -130,15 +130,15 @@ namespace exqudens {
         std::vector<char> buffer;
 
         buffer = server->receiveData();
-        server->sendData(Tests::toBytes(buffer.size()));
+        server->sendData(SocketTests::toBytes(buffer.size()));
         receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
 
         buffer = server->receiveData();
-        server->sendData(Tests::toBytes(buffer.size()));
+        server->sendData(SocketTests::toBytes(buffer.size()));
         receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
 
         buffer = server->receiveData();
-        server->sendData(Tests::toBytes(buffer.size()));
+        server->sendData(SocketTests::toBytes(buffer.size()));
         receivedData.insert(receivedData.end(), buffer.begin(), buffer.end());
 
         server->destroy();
@@ -146,7 +146,7 @@ namespace exqudens {
 
       std::string data = std::string(1024, 'a') + std::string(1024, '1') + "ABC";
       std::vector<char> buffer = std::vector<char>(data.begin(), data.end());
-      std::vector<std::vector<char>> parts = Tests::split(buffer, 1024);
+      std::vector<std::vector<char>> parts = SocketTests::split(buffer, 1024);
       size_t size = 0;
       std::vector<size_t> sizes = {};
 
@@ -156,17 +156,17 @@ namespace exqudens {
 
       client->sendData(parts.at(0));
       buffer = client->receiveData();
-      size = Tests::toSize(buffer);
+      size = SocketTests::toSize(buffer);
       sizes.emplace_back(size);
 
       client->sendData(parts.at(1));
       buffer = client->receiveData();
-      size = Tests::toSize(buffer);
+      size = SocketTests::toSize(buffer);
       sizes.emplace_back(size);
 
       client->sendData(parts.at(2));
       buffer = client->receiveData();
-      size = Tests::toSize(buffer);
+      size = SocketTests::toSize(buffer);
       sizes.emplace_back(size);
 
       client->destroy();
