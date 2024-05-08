@@ -1,4 +1,5 @@
 -- default
   * GLOBAL:
     ENABLED = false
--- exqudens.Tests
+-- TestApplication
+-- exqudens.SocketTests

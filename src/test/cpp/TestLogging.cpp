@@ -1,3 +1,4 @@
+#include <optional>
 #include <filesystem>
 #include <stdexcept>
 
@@ -5,6 +6,7 @@
 INITIALIZE_EASYLOGGINGPP
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
+#define LOGGING_CONFIG std::string("--logging-config")
 
 std::string TestLogging::defaultConfig() {
   try {
@@ -77,4 +79,59 @@ void TestLogging::config(const std::string& filePath, const std::string& working
   }
 }
 
+std::string TestLogging::config(const std::vector<std::string>& commandLineArgs) {
+  try {
+    std::optional<std::string> loggingConfigFile = {};
+    std::string configType = "default";
+
+    // try command line args
+    for (size_t i = 0; i < commandLineArgs.size(); i++) {
+      if (LOGGING_CONFIG == commandLineArgs.at(i) && (i + 1) <= (commandLineArgs.size() - 1)) {
+        std::filesystem::path loggingFile(commandLineArgs.at(i + 1));
+        if (std::filesystem::exists(loggingFile)) {
+          loggingConfigFile = loggingFile.generic_string();
+          configType = "command-line-arg (file: '" + loggingFile.generic_string() + "')";
+        }
+      }
+    }
+    // try executable dir
+    if (!loggingConfigFile.has_value()) {
+      std::filesystem::path executableDir = std::filesystem::path(commandLineArgs.front()).parent_path();
+      std::filesystem::path loggingFile = executableDir / "logging-config.txt";
+      if (std::filesystem::exists(loggingFile)) {
+        loggingConfigFile = loggingFile.generic_string();
+        configType = "executable-dir (file: '" + loggingFile.generic_string() + "')";
+      }
+    }
+    // try src test resources
+    if (!loggingConfigFile.has_value()) {
+      std::filesystem::path currentFile = std::filesystem::path(__FILE__);
+      if (
+          !currentFile.empty()
+          && std::filesystem::exists(currentFile)
+          && currentFile.parent_path().filename().string() == "cpp"
+          && currentFile.parent_path().parent_path().filename().string() == "test"
+          && currentFile.parent_path().parent_path().parent_path().filename().string() == "src"
+      ) {
+        std::filesystem::path loggingFile = std::filesystem::path(currentFile.parent_path().parent_path()) / "resources" / "logging-config.txt";
+        if (std::filesystem::exists(loggingFile)) {
+          loggingConfigFile = loggingFile.generic_string();
+          configType = "src-test-resources (file: '" + loggingFile.generic_string() + "')";
+        }
+      }
+    }
+
+    if (!loggingConfigFile.has_value()) {
+      throw std::runtime_error(CALL_INFO + ": Can't find file: 'logging-config.txt'");
+    }
+
+    config(loggingConfigFile.value(), std::filesystem::path(commandLineArgs.front()).parent_path().generic_string());
+
+    return configType;
+  } catch (...) {
+    std::throw_with_nested(std::runtime_error(CALL_INFO));
+  }
+}
+
 #undef CALL_INFO
+#undef LOGGING_CONFIG

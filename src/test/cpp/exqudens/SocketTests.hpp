@@ -25,7 +25,7 @@ namespace exqudens {
 
     protected:
 
-      inline static const char* LOGGER_ID = "exqudens.Tests";
+      inline static const char* LOGGER_ID = "exqudens.SocketTests";
 
     private:
 

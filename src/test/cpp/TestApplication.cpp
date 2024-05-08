@@ -19,7 +19,6 @@
 #include "exqudens/SocketTests.hpp"
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
-#define LOGGING_CONFIG std::string("--logging-config")
 
 int TestApplication::run(int argc, char** argv) {
   try {
@@ -42,55 +41,9 @@ int TestApplication::run(int argc, char** argv) {
       throw std::runtime_error(CALL_INFO + ": TestConfiguration::getExecutableFile().empty()");
     }
 
-    std::optional<std::string> loggingConfigFile = {};
-    std::string configType;
+    std::string configType = TestLogging::config(args);
 
-    // try command line args
-    for (size_t i = 0; i < args.size(); i++) {
-      std::cout << "args[" << i << "]: '" << args.at(i) << "'" << std::endl;
-      if (LOGGING_CONFIG == args.at(i) && (i + 1) <= (args.size() - 1)) {
-        std::filesystem::path loggingFile(args.at(i + 1));
-        if (std::filesystem::exists(loggingFile)) {
-          loggingConfigFile = loggingFile.generic_string();
-          configType = "command-line-arg (file: '" + loggingFile.generic_string() + "')";
-        }
-      }
-    }
-    // try executable dir
-    if (!loggingConfigFile.has_value()) {
-      std::filesystem::path executableDir = std::filesystem::path(args.front()).parent_path();
-      std::filesystem::path loggingFile = executableDir / "logging-config.txt";
-      if (std::filesystem::exists(loggingFile)) {
-        loggingConfigFile = loggingFile.generic_string();
-        configType = "executable-dir (file: '" + loggingFile.generic_string() + "')";
-      }
-    }
-    // try src test resources
-    if (!loggingConfigFile.has_value()) {
-      std::filesystem::path currentFile = std::filesystem::path(__FILE__);
-      if (
-          !currentFile.empty()
-          && std::filesystem::exists(currentFile)
-          && currentFile.parent_path().filename().string() == "cpp"
-          && currentFile.parent_path().parent_path().filename().string() == "test"
-          && currentFile.parent_path().parent_path().parent_path().filename().string() == "src"
-      ) {
-        std::filesystem::path loggingFile = std::filesystem::path(currentFile.parent_path().parent_path()) / "resources" / "logging-config.txt";
-        if (std::filesystem::exists(loggingFile)) {
-          loggingConfigFile = loggingFile.generic_string();
-          configType = "src-test-resources (file: '" + loggingFile.generic_string() + "')";
-        }
-      }
-    }
-
-    if (!loggingConfigFile.has_value()) {
-      throw std::runtime_error(CALL_INFO + ": Can't find: 'logging-config.txt'");
-    } else {
-      TestLogging::config(loggingConfigFile.value(), std::filesystem::path(args.front()).parent_path().generic_string());
-      configType = "default";
-    }
-
-    LOG(INFO) << "Logging config type: '" << configType << "'";
+    CLOG(INFO, LOGGER_ID) << "Logging config type: '" << configType << "'";
 
     testing::InitGoogleMock(&argc, argv);
     testing::InitGoogleTest(&argc, argv);
@@ -106,4 +59,3 @@ int TestApplication::run(int argc, char** argv) {
 }
 
 #undef CALL_INFO
-#undef LOGGING_CONFIG
