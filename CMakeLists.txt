@@ -156,6 +156,10 @@ if(NOT "${SKIP_TEST}")
     elseif(NOT "${TEST_GROUP}" STREQUAL "all" AND NOT "${TEST_CASE}" STREQUAL "all")
         set(TEST_REGEXP "^${TEST_GROUP}\\.${TEST_CASE}$")
     endif()
+
+    message(STATUS "TEST_GROUP: '${TEST_GROUP}'")
+    message(STATUS "TEST_CASE: '${TEST_CASE}'")
+    message(STATUS "TEST_REGEXP: '${TEST_REGEXP}'")
 endif()
 
 set(CONAN_INSTALL_TEST_PREFIX "${PROJECT_BINARY_DIR}/conan-install-test")

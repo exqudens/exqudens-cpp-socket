@@ -43,7 +43,7 @@ int TestApplication::run(int argc, char** argv) {
 
     std::string configType = TestLogging::config(args);
 
-    CLOG(INFO, LOGGER_ID) << "Logging config type: '" << configType << "'";
+    TEST_LOGGING_INFO(LOGGER_ID) << "Logging config type: '" << configType << "'";
 
     testing::InitGoogleMock(&argc, argv);
     testing::InitGoogleTest(&argc, argv);

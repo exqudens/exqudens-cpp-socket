@@ -35,7 +35,7 @@ namespace exqudens {
 
       static void socketsLog(const std::string& message, const unsigned short& level, const std::string& function, const std::string& file, const size_t& line) {
         const std::lock_guard<std::mutex> lock(mutex);
-        CLOG(INFO, LOGGER_ID) << "[" + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        TEST_LOGGING_INFO(LOGGER_ID) << "[" + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
       }
 
       static std::vector<char> toBytes(const size_t& value) {
@@ -71,6 +71,10 @@ namespace exqudens {
 
   TEST_F(SocketTests, test1) {
     try {
+      std::string testGroup = testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
+      std::string testCase = testing::UnitTest::GetInstance()->current_test_info()->name();
+      TEST_LOGGING_INFO(LOGGER_ID) << "start-test: " << testGroup << "." << testCase;
+
       SocketFactory socketFactory;
       std::string message;
 
@@ -80,9 +84,11 @@ namespace exqudens {
         message = TestUtils::toString(exception);
       }
 
-      CLOG(INFO, LOGGER_ID) << message;
+      TEST_LOGGING_INFO(LOGGER_ID) << message;
 
       ASSERT_FALSE(message.empty());
+
+      TEST_LOGGING_INFO(LOGGER_ID) << "end-test: " << testGroup << "." << testCase;
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
@@ -90,6 +96,10 @@ namespace exqudens {
 
   TEST_F(SocketTests, test2) {
     try {
+      std::string testGroup = testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
+      std::string testCase = testing::UnitTest::GetInstance()->current_test_info()->name();
+      TEST_LOGGING_INFO(LOGGER_ID) << "start-test: " << testGroup << "." << testCase;
+
       TestThreadPool pool(2, 2);
       SocketFactory socketFactory;
 
@@ -105,6 +115,8 @@ namespace exqudens {
       socketFactory.destroy();
 
       future.get();
+
+      TEST_LOGGING_INFO(LOGGER_ID) << "end-test: " << testGroup << "." << testCase;
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
@@ -112,6 +124,10 @@ namespace exqudens {
 
   TEST_F(SocketTests, test3) {
     try {
+      std::string testGroup = testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
+      std::string testCase = testing::UnitTest::GetInstance()->current_test_info()->name();
+      TEST_LOGGING_INFO(LOGGER_ID) << "start-test: " << testGroup << "." << testCase;
+
       TestThreadPool pool(1, 1);
       SocketFactory socketFactory;
 
@@ -178,6 +194,8 @@ namespace exqudens {
       ASSERT_EQ(3, sizes.at(2));
 
       future.get();
+
+      TEST_LOGGING_INFO(LOGGER_ID) << "end-test: " << testGroup << "." << testCase;
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }

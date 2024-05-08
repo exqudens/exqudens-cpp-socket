@@ -1,12 +1,42 @@
 #include <optional>
 #include <filesystem>
 #include <stdexcept>
+#include <utility>
+
+#define ELPP_NO_DEFAULT_LOG_FILE
+//#define ELPP_THREAD_SAFE
+#include <easylogging++.h>
+INITIALIZE_EASYLOGGINGPP
 
 #include "TestLogging.hpp"
-INITIALIZE_EASYLOGGINGPP
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
 #define LOGGING_CONFIG std::string("--logging-config")
+
+TestLogging::Writer::Writer(
+    std::string id,
+    size_t level,
+    std::string file,
+    size_t line,
+    std::string function
+):
+    id(std::move(id)),
+    level(level),
+    file(std::move(file)),
+    line(line),
+    function(std::move(function))
+{}
+
+TestLogging::Writer::~Writer() {
+  TestLogging::log(
+      id,
+      level,
+      file,
+      line,
+      function,
+      stream.str()
+  );
+}
 
 std::string TestLogging::defaultConfig() {
   try {
@@ -45,6 +75,10 @@ std::string TestLogging::defaultGlobalConfig() {
 
 void TestLogging::config(const std::string& filePath, const std::string& workingDir) {
   try {
+    if (configured) {
+      return;
+    }
+
     std::filesystem::path file;
 
     if (workingDir.empty()) {
@@ -57,7 +91,7 @@ void TestLogging::config(const std::string& filePath, const std::string& working
       throw std::runtime_error(CALL_INFO + ": Not exists: '" + file.generic_string() + "'");
     }
 
-    el::Configurations configurations;
+    /*el::Configurations configurations;
 
     configurations.setToDefault();
 
@@ -73,7 +107,14 @@ void TestLogging::config(const std::string& filePath, const std::string& working
 
     el::Loggers::setDefaultConfigurations(configurations, true);
 
+    el::Loggers::configureFromGlobal(file.generic_string().c_str());*/
+
     el::Loggers::configureFromGlobal(file.generic_string().c_str());
+    el::Configurations* configurations = el::Loggers::getLogger("default")->configurations();
+    el::Loggers::setDefaultConfigurations(*configurations, true);
+    el::Loggers::configureFromGlobal(file.generic_string().c_str());
+
+    configured = true;
   } catch (...) {
     std::throw_with_nested(std::runtime_error(CALL_INFO));
   }
@@ -81,8 +122,13 @@ void TestLogging::config(const std::string& filePath, const std::string& working
 
 std::string TestLogging::config(const std::vector<std::string>& commandLineArgs) {
   try {
+    std::string configType = "configured";
+
+    if (configured) {
+      return configType;
+    }
+
     std::optional<std::string> loggingConfigFile = {};
-    std::string configType = "default";
 
     // try command line args
     for (size_t i = 0; i < commandLineArgs.size(); i++) {
@@ -128,6 +174,140 @@ std::string TestLogging::config(const std::vector<std::string>& commandLineArgs)
     config(loggingConfigFile.value(), std::filesystem::path(commandLineArgs.front()).parent_path().generic_string());
 
     return configType;
+  } catch (...) {
+    std::throw_with_nested(std::runtime_error(CALL_INFO));
+  }
+}
+
+TestLogging::Writer TestLogging::none(
+    const std::string& id,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function
+) {
+  return {
+      id,
+      0,
+      file,
+      line,
+      function
+  };
+}
+
+TestLogging::Writer TestLogging::fatal(
+    const std::string& id,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function
+) {
+  return {
+      id,
+      1,
+      file,
+      line,
+      function
+  };
+}
+
+TestLogging::Writer TestLogging::error(
+    const std::string& id,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function
+) {
+  return {
+      id,
+      2,
+      file,
+      line,
+      function
+  };
+}
+
+TestLogging::Writer TestLogging::warn(
+    const std::string& id,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function
+) {
+  return {
+      id,
+      3,
+      file,
+      line,
+      function
+  };
+}
+
+TestLogging::Writer TestLogging::info(
+    const std::string& id,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function
+) {
+  return {
+      id,
+      4,
+      file,
+      line,
+      function
+  };
+}
+
+TestLogging::Writer TestLogging::debug(
+    const std::string& id,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function
+) {
+  return {
+      id,
+      5,
+      file,
+      line,
+      function
+  };
+}
+
+TestLogging::Writer TestLogging::verb(
+    const std::string& id,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function
+) {
+  return {
+      id,
+      6,
+      file,
+      line,
+      function
+  };
+}
+
+void TestLogging::log(
+    const std::string& id,
+    const size_t& level,
+    const std::string& file,
+    const size_t& line,
+    const std::string& function,
+    const std::string& message
+) {
+  try {
+    el::Level internalLevel = el::Level::Unknown;
+    if (level == 1) {
+      internalLevel = el::Level::Fatal;
+    } else if (level == 2) {
+      internalLevel = el::Level::Error;
+    } else if (level == 3) {
+      internalLevel = el::Level::Warning;
+    } else if (level == 4) {
+      internalLevel = el::Level::Info;
+    } else if (level == 5) {
+      internalLevel = el::Level::Debug;
+    } else if (level == 6) {
+      internalLevel = el::Level::Verbose;
+    }
+    el::base::Writer(internalLevel, file.c_str(), line, function.c_str(), el::base::DispatchAction::NormalLog).construct(1, id.c_str()) << message;
   } catch (...) {
     std::throw_with_nested(std::runtime_error(CALL_INFO));
   }
