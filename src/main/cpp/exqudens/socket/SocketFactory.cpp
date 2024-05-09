@@ -10,22 +10,23 @@
 #include "exqudens/socket/SocketClient.hpp"
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
-#define LOG_FATAL 0
-#define LOG_ERROR 1
-#define LOG_WARN 2
-#define LOG_INFO 3
-#define LOG_DEBUG 4
-#define LOG_TRACE 5
+#define LOG_FATAL 1
+#define LOG_ERROR 2
+#define LOG_WARNING 3
+#define LOG_INFO 4
+#define LOG_DEBUG 5
+#define LOG_VERBOSE 6
 
 namespace exqudens {
 
   void SocketFactory::setLogFunction(
       const std::function<void(
           const std::string&,
+          const size_t&,
+          const std::string&,
+          const std::string&,
           const unsigned short&,
-          const std::string&,
-          const std::string&,
-          const size_t&
+          const std::string&
       )>& value
   ) {
     logFunction = value;
@@ -54,7 +55,7 @@ namespace exqudens {
 
 #endif
 
-        log("'init' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'init' success.");
 
         initialized = true;
       }
@@ -148,7 +149,7 @@ namespace exqudens {
 
 #endif
 
-        log("'destroy' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'destroy' success.");
 
         initialized = false;
       }
@@ -158,15 +159,23 @@ namespace exqudens {
   }
 
   void SocketFactory::log(
-      const std::string& message,
-      const unsigned short& level,
-      const std::string& function,
       const std::string& file,
-      const size_t& line
+      const size_t& line,
+      const std::string& function,
+      const std::string& id,
+      const unsigned short& level,
+      const std::string& message
   ) {
     try {
       if (logFunction) {
-        logFunction(message, level, function, std::filesystem::path(file).filename().string(), line);
+        logFunction(
+            std::filesystem::path(file).filename().string(),
+            line,
+            function,
+            std::filesystem::path(id).filename().replace_extension().string(),
+            level,
+            message
+        );
       }
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
@@ -178,7 +187,7 @@ namespace exqudens {
 #undef CALL_INFO
 #undef LOG_FATAL
 #undef LOG_ERROR
-#undef LOG_WARN
+#undef LOG_WARNING
 #undef LOG_INFO
 #undef LOG_DEBUG
-#undef LOG_TRACE
+#undef LOG_VERBOSE

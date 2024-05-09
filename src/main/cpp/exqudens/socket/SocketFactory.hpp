@@ -10,10 +10,11 @@ namespace exqudens {
 
       std::function<void(
           const std::string&,
+          const size_t&,
+          const std::string&,
+          const std::string&,
           const unsigned short&,
-          const std::string&,
-          const std::string&,
-          const size_t&
+          const std::string&
       )> logFunction = {};
       bool initialized = false;
 
@@ -23,10 +24,11 @@ namespace exqudens {
       void setLogFunction(
           const std::function<void(
               const std::string&,
+              const size_t&,
+              const std::string&,
+              const std::string&,
               const unsigned short&,
-              const std::string&,
-              const std::string&,
-              const size_t&
+              const std::string&
           )>& value
       ) override;
 
@@ -58,11 +60,12 @@ namespace exqudens {
 
       EXQUDENS_SOCKET_INLINE
       virtual void log(
-          const std::string& message,
-          const unsigned short& level,
-          const std::string& function,
           const std::string& file,
-          const size_t& line
+          const size_t& line,
+          const std::string& function,
+          const std::string& id,
+          const unsigned short& level,
+          const std::string& message
       );
 
   };

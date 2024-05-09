@@ -27,10 +27,11 @@ namespace exqudens {
       virtual void setLogFunction(
           const std::function<void(
               const std::string&,
+              const size_t&,
+              const std::string&,
+              const std::string&,
               const unsigned short&,
-              const std::string&,
-              const std::string&,
-              const size_t&
+              const std::string&
           )>& value
       ) = 0;
 

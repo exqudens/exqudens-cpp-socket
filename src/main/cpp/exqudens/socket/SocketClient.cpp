@@ -15,12 +15,12 @@ typedef int SOCKET;
 #endif
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
-#define LOG_FATAL 0
-#define LOG_ERROR 1
-#define LOG_WARN 2
-#define LOG_INFO 3
-#define LOG_DEBUG 4
-#define LOG_TRACE 5
+#define LOG_FATAL 1
+#define LOG_ERROR 2
+#define LOG_WARNING 3
+#define LOG_INFO 4
+#define LOG_DEBUG 5
+#define LOG_VERBOSE 6
 
 namespace exqudens {
 
@@ -53,7 +53,7 @@ namespace exqudens {
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      log("'getaddrinfo' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'getaddrinfo' success.");
 
       for(addrinfo* i = addressInfo; i != nullptr; i = i->ai_next) {
         socketResult = openSocket(i->ai_family, i->ai_socktype, i->ai_protocol);
@@ -70,7 +70,7 @@ namespace exqudens {
 
         transferSocket.store(socketResult.first);
 
-        log("'socket' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'socket' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'");
 
         connectResult = connect((SOCKET) transferSocket.load(), i->ai_addr, (int) i->ai_addrlen);
 
@@ -92,7 +92,7 @@ namespace exqudens {
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      log("'socket' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'socket' success.");
 
       if (connectResult < 0) {
         errorMessage = "'connect' failed with result: '";
@@ -101,7 +101,7 @@ namespace exqudens {
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      log("'connect' success.", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'connect' success.");
 
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
@@ -125,10 +125,10 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           //throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          log("'shutdown' warning " + errorMessage, LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+          log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'shutdown' warning " + errorMessage);
         }
 
-        log("'shutdown' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'shutdown' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'");
 
         int closeSocketResult = closeSocket(tmpTransferSocket);
 
@@ -140,10 +140,10 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          ////log("'close' warning " + errorMessage, LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+          //log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'close' warning " + errorMessage);
         }
 
-        log("'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'", LOG_INFO, __FUNCTION__, __FILE__, __LINE__);
+        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'");
       }
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
@@ -155,7 +155,7 @@ namespace exqudens {
 #undef CALL_INFO
 #undef LOG_FATAL
 #undef LOG_ERROR
-#undef LOG_WARN
+#undef LOG_WARNING
 #undef LOG_INFO
 #undef LOG_DEBUG
-#undef LOG_TRACE
+#undef LOG_VERBOSE

@@ -14,26 +14,26 @@ INITIALIZE_EASYLOGGINGPP
 #define LOGGING_CONFIG std::string("--logging-config")
 
 TestLogging::Writer::Writer(
-    std::string id,
-    size_t level,
     std::string file,
     size_t line,
-    std::string function
+    std::string function,
+    std::string id,
+    unsigned short level
 ):
-    id(std::move(id)),
-    level(level),
     file(std::move(file)),
     line(line),
-    function(std::move(function))
+    function(std::move(function)),
+    id(std::move(id)),
+    level(level)
 {}
 
 TestLogging::Writer::~Writer() {
   TestLogging::log(
-      id,
-      level,
       file,
       line,
       function,
+      id,
+      level,
       stream.str()
   );
 }
@@ -179,121 +179,17 @@ std::string TestLogging::config(const std::vector<std::string>& commandLineArgs)
   }
 }
 
-TestLogging::Writer TestLogging::none(
-    const std::string& id,
-    const std::string& file,
-    const size_t& line,
-    const std::string& function
-) {
-  return {
-      id,
-      0,
-      file,
-      line,
-      function
-  };
-}
-
-TestLogging::Writer TestLogging::fatal(
-    const std::string& id,
-    const std::string& file,
-    const size_t& line,
-    const std::string& function
-) {
-  return {
-      id,
-      1,
-      file,
-      line,
-      function
-  };
-}
-
-TestLogging::Writer TestLogging::error(
-    const std::string& id,
-    const std::string& file,
-    const size_t& line,
-    const std::string& function
-) {
-  return {
-      id,
-      2,
-      file,
-      line,
-      function
-  };
-}
-
-TestLogging::Writer TestLogging::warn(
-    const std::string& id,
-    const std::string& file,
-    const size_t& line,
-    const std::string& function
-) {
-  return {
-      id,
-      3,
-      file,
-      line,
-      function
-  };
-}
-
-TestLogging::Writer TestLogging::info(
-    const std::string& id,
-    const std::string& file,
-    const size_t& line,
-    const std::string& function
-) {
-  return {
-      id,
-      4,
-      file,
-      line,
-      function
-  };
-}
-
-TestLogging::Writer TestLogging::debug(
-    const std::string& id,
-    const std::string& file,
-    const size_t& line,
-    const std::string& function
-) {
-  return {
-      id,
-      5,
-      file,
-      line,
-      function
-  };
-}
-
-TestLogging::Writer TestLogging::verb(
-    const std::string& id,
-    const std::string& file,
-    const size_t& line,
-    const std::string& function
-) {
-  return {
-      id,
-      6,
-      file,
-      line,
-      function
-  };
-}
-
 void TestLogging::log(
-    const std::string& id,
-    const size_t& level,
     const std::string& file,
     const size_t& line,
     const std::string& function,
+    const std::string& id,
+    const unsigned short& level,
     const std::string& message
 ) {
   try {
     el::Level internalLevel = el::Level::Unknown;
+    std::string internalFile = std::filesystem::path(file).filename().string();
     if (level == 1) {
       internalLevel = el::Level::Fatal;
     } else if (level == 2) {
@@ -307,7 +203,7 @@ void TestLogging::log(
     } else if (level == 6) {
       internalLevel = el::Level::Verbose;
     }
-    el::base::Writer(internalLevel, file.c_str(), line, function.c_str(), el::base::DispatchAction::NormalLog).construct(1, id.c_str()) << message;
+    el::base::Writer(internalLevel, internalFile.c_str(), line, function.c_str(), el::base::DispatchAction::NormalLog).construct(1, id.c_str()) << message;
   } catch (...) {
     std::throw_with_nested(std::runtime_error(CALL_INFO));
   }

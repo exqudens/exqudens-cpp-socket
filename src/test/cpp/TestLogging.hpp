@@ -5,53 +5,62 @@
 #include <vector>
 #include <sstream>
 
-#ifndef TEST_LOGGING_FATAL
-#define TEST_LOGGING_FATAL(id) TestLogging::fatal(id, __FILE__, __LINE__, __FUNCTION__)
+#ifndef TEST_LOG_F
+#define TEST_LOG_F(id) TestLogging::Writer(__FILE__, __LINE__, __FUNCTION__, id, TestLogging::Level::FATAL)
 #endif
 
-#ifndef TEST_LOGGING_ERROR
-#define TEST_LOGGING_ERROR(id) TestLogging::error(id, __FILE__, __LINE__, __FUNCTION__)
+#ifndef TEST_LOG_E
+#define TEST_LOG_E(id) TestLogging::Writer(__FILE__, __LINE__, __FUNCTION__, id, TestLogging::Level::ERROR)
 #endif
 
-#ifndef TEST_LOGGING_WARN
-#define TEST_LOGGING_WARN(id) TestLogging::warn(id, __FILE__, __LINE__, __FUNCTION__)
+#ifndef TEST_LOG_W
+#define TEST_LOG_W(id) TestLogging::Writer(__FILE__, __LINE__, __FUNCTION__, id, TestLogging::Level::WARNING)
 #endif
 
-#ifndef TEST_LOGGING_INFO
-#define TEST_LOGGING_INFO(id) TestLogging::info(id, __FILE__, __LINE__, __FUNCTION__)
+#ifndef TEST_LOG_I
+#define TEST_LOG_I(id) TestLogging::Writer(__FILE__, __LINE__, __FUNCTION__, id, TestLogging::Level::INFO)
 #endif
 
-#ifndef TEST_LOGGING_DEBUG
-#define TEST_LOGGING_DEBUG(id) TestLogging::debug(id, __FILE__, __LINE__, __FUNCTION__)
+#ifndef TEST_LOG_D
+#define TEST_LOG_D(id) TestLogging::Writer(__FILE__, __LINE__, __FUNCTION__, id, TestLogging::Level::DEBUG)
 #endif
 
-#ifndef TEST_LOGGING_VERB
-#define TEST_LOGGING_VERB(id) TestLogging::verb(id, __FILE__, __LINE__, __FUNCTION__)
+#ifndef TEST_LOG_V
+#define TEST_LOG_V(id) TestLogging::Writer(__FILE__, __LINE__, __FUNCTION__, id, TestLogging::Level::VERBOSE)
 #endif
 
 class TestLogging {
 
   public:
 
+    struct Level {
+      inline static const unsigned short FATAL = 1;
+      inline static const unsigned short ERROR = 2;
+      inline static const unsigned short WARNING = 3;
+      inline static const unsigned short INFO = 4;
+      inline static const unsigned short DEBUG = 5;
+      inline static const unsigned short VERBOSE = 6;
+    };
+
     class Writer {
 
       private:
 
-        std::string id;
-        size_t level = 0;
         std::string file;
         size_t line = 0;
         std::string function;
+        std::string id;
+        unsigned short level = 0;
         std::ostringstream stream;
 
       public:
 
         Writer(
-          std::string id,
-          size_t level,
           std::string file,
           size_t line,
-          std::string function
+          std::string function,
+          std::string id,
+          unsigned short level
         );
 
         Writer() = delete;
@@ -82,22 +91,15 @@ class TestLogging {
 
     static std::string config(const std::vector<std::string>& commandLineArgs);
 
-    static Writer none(const std::string& id, const std::string& file, const size_t& line, const std::string& function);
-
-    static Writer fatal(const std::string& id, const std::string& file, const size_t& line, const std::string& function);
-
-    static Writer error(const std::string& id, const std::string& file, const size_t& line, const std::string& function);
-
-    static Writer warn(const std::string& id, const std::string& file, const size_t& line, const std::string& function);
-
-    static Writer info(const std::string& id, const std::string& file, const size_t& line, const std::string& function);
-
-    static Writer debug(const std::string& id, const std::string& file, const size_t& line, const std::string& function);
-
-    static Writer verb(const std::string& id, const std::string& file, const size_t& line, const std::string& function);
-
   private:
 
-    static void log(const std::string& id, const size_t& level, const std::string& file, const size_t& line, const std::string& function, const std::string& message);
+    static void log(
+        const std::string& file,
+        const size_t& line,
+        const std::string& function,
+        const std::string& id,
+        const unsigned short& level,
+        const std::string& message
+    );
 
 };

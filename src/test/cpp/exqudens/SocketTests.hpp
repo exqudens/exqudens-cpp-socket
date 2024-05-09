@@ -33,9 +33,28 @@ namespace exqudens {
 
     public:
 
-      static void socketsLog(const std::string& message, const unsigned short& level, const std::string& function, const std::string& file, const size_t& line) {
+      static void socketsLog(
+          const std::string& file,
+          const size_t& line,
+          const std::string& function,
+          const std::string& id,
+          const unsigned short& level,
+          const std::string& message
+      ) {
         const std::lock_guard<std::mutex> lock(mutex);
-        TEST_LOGGING_INFO(LOGGER_ID) << "[" + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        if (level == 1) {
+          TEST_LOG_F(LOGGER_ID) << "[(" + id + ") " + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        } else if (level == 2) {
+          TEST_LOG_E(LOGGER_ID) << "[(" + id + ") " + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        } else if (level == 3) {
+          TEST_LOG_W(LOGGER_ID) << "[(" + id + ") " + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        } else if (level == 4) {
+          TEST_LOG_I(LOGGER_ID) << "[(" + id + ") " + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        } else if (level == 5) {
+          TEST_LOG_D(LOGGER_ID) << "[(" + id + ") " + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        } else if (level == 6) {
+          TEST_LOG_V(LOGGER_ID) << "[(" + id + ") " + function + " " + "(" + file + ":" + std::to_string(line) + ")" + "] " << message;
+        }
       }
 
       static std::vector<char> toBytes(const size_t& value) {
@@ -73,7 +92,7 @@ namespace exqudens {
     try {
       std::string testGroup = testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
       std::string testCase = testing::UnitTest::GetInstance()->current_test_info()->name();
-      TEST_LOGGING_INFO(LOGGER_ID) << "start-test: " << testGroup << "." << testCase;
+      TEST_LOG_I(LOGGER_ID) << "'" << testGroup << "." << testCase << "' start";
 
       SocketFactory socketFactory;
       std::string message;
@@ -84,11 +103,11 @@ namespace exqudens {
         message = TestUtils::toString(exception);
       }
 
-      TEST_LOGGING_INFO(LOGGER_ID) << message;
+      TEST_LOG_I(LOGGER_ID) << message;
 
       ASSERT_FALSE(message.empty());
 
-      TEST_LOGGING_INFO(LOGGER_ID) << "end-test: " << testGroup << "." << testCase;
+      TEST_LOG_I(LOGGER_ID) << "'" << testGroup << "." << testCase << "' end";
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
@@ -98,7 +117,7 @@ namespace exqudens {
     try {
       std::string testGroup = testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
       std::string testCase = testing::UnitTest::GetInstance()->current_test_info()->name();
-      TEST_LOGGING_INFO(LOGGER_ID) << "start-test: " << testGroup << "." << testCase;
+      TEST_LOG_I(LOGGER_ID) << "'" << testGroup << "." << testCase << "' start";
 
       TestThreadPool pool(2, 2);
       SocketFactory socketFactory;
@@ -116,7 +135,7 @@ namespace exqudens {
 
       future.get();
 
-      TEST_LOGGING_INFO(LOGGER_ID) << "end-test: " << testGroup << "." << testCase;
+      TEST_LOG_I(LOGGER_ID) << "'" << testGroup << "." << testCase << "' end";
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }
@@ -126,7 +145,7 @@ namespace exqudens {
     try {
       std::string testGroup = testing::UnitTest::GetInstance()->current_test_info()->test_suite_name();
       std::string testCase = testing::UnitTest::GetInstance()->current_test_info()->name();
-      TEST_LOGGING_INFO(LOGGER_ID) << "start-test: " << testGroup << "." << testCase;
+      TEST_LOG_I(LOGGER_ID) << "'" << testGroup << "." << testCase << "' start";
 
       TestThreadPool pool(1, 1);
       SocketFactory socketFactory;
@@ -195,7 +214,7 @@ namespace exqudens {
 
       future.get();
 
-      TEST_LOGGING_INFO(LOGGER_ID) << "end-test: " << testGroup << "." << testCase;
+      TEST_LOG_I(LOGGER_ID) << "'" << testGroup << "." << testCase << "' end";
     } catch (const std::exception& e) {
       FAIL() << TestUtils::toString(e);
     }

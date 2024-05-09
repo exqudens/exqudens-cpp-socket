@@ -43,12 +43,16 @@ int TestApplication::run(int argc, char** argv) {
 
     std::string configType = TestLogging::config(args);
 
-    TEST_LOGGING_INFO(LOGGER_ID) << "Logging config type: '" << configType << "'";
+    TEST_LOG_I(LOGGER_ID) << "start config type: '" << configType << "'";
 
     testing::InitGoogleMock(&argc, argv);
     testing::InitGoogleTest(&argc, argv);
 
-    return RUN_ALL_TESTS();
+    int result = RUN_ALL_TESTS();
+
+    TEST_LOG_I(LOGGER_ID) << "end";
+
+    return result;
   } catch (const std::exception& e) {
     std::cerr << CALL_INFO + ": " + TestUtils::toString(e) << std::endl;
     return EXIT_FAILURE;
