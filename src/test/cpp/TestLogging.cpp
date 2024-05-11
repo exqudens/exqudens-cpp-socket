@@ -46,7 +46,7 @@ std::string TestLogging::defaultConfig() {
     value += "  ENABLED              = true\n";
     value += "  TO_STANDARD_OUTPUT   = true\n";
     value += "  TO_FILE              = false\n";
-    value += "  FILENAME             = \"log.txt\"\n";
+    value += "  FILENAME             = \"log-%datetime{%Y-%M-%d_%H-%m-%s}.txt\"\n";
     value += "  MAX_LOG_FILE_SIZE    = 2097152 ## 2MB\n";
     value += "  LOG_FLUSH_THRESHOLD  = 1 ## Flush after every 1 log\n";
     value += "  FORMAT               = \"%datetime %level [%logger] %msg\"\n";
