@@ -9,6 +9,9 @@ namespace exqudens {
     public:
 
       EXQUDENS_SOCKET_INLINE
+      void setHost(const std::string& value) override;
+
+      EXQUDENS_SOCKET_INLINE
       void init() override;
 
       EXQUDENS_SOCKET_INLINE

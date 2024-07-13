@@ -27,10 +27,6 @@ namespace exqudens {
     port = value;
   }
 
-  void Socket::setHost(const std::string& value) {
-    throw std::runtime_error(CALL_INFO + ": Not applicable!!!");
-  }
-
   void Socket::setLogFunction(
       const std::function<void(
           const std::string&,
@@ -42,10 +38,6 @@ namespace exqudens {
       )>& value
   ) {
     logFunction = value;
-  }
-
-  void Socket::init() {
-    throw std::runtime_error(CALL_INFO + ": Not applicable!!!");
   }
 
   size_t Socket::sendData(const std::vector<char>& buffer) {
@@ -116,10 +108,6 @@ namespace exqudens {
 
   std::vector<char> Socket::receiveData() {
     return receiveData(1024);
-  }
-
-  void Socket::destroy() {
-    throw std::runtime_error(CALL_INFO + ": Not applicable!!!");
   }
 
   int Socket::getLastError() {

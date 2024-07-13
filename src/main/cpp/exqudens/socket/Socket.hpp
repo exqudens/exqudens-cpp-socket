@@ -32,9 +32,6 @@ namespace exqudens {
       void setPort(const unsigned short& value) override;
 
       EXQUDENS_SOCKET_INLINE
-      void setHost(const std::string& value) override;
-
-      EXQUDENS_SOCKET_INLINE
       void setLogFunction(
           const std::function<void(
               const std::string&,
@@ -47,9 +44,6 @@ namespace exqudens {
       ) override;
 
       EXQUDENS_SOCKET_INLINE
-      void init() override;
-
-      EXQUDENS_SOCKET_INLINE
       size_t sendData(const std::vector<char>& buffer) override;
 
       EXQUDENS_SOCKET_INLINE
@@ -57,9 +51,6 @@ namespace exqudens {
 
       EXQUDENS_SOCKET_INLINE
       std::vector<char> receiveData() override;
-
-      EXQUDENS_SOCKET_INLINE
-      void destroy() override;
 
       EXQUDENS_SOCKET_INLINE
       ~Socket() noexcept override = default;

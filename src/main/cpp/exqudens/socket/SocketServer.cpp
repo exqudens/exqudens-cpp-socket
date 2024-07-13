@@ -15,7 +15,7 @@ typedef int SOCKET;
 #include "exqudens/socket/SocketServer.hpp"
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
-#define LOGGER_ID "SocketServer"
+#define LOGGER_ID "exqudens.SocketServer"
 #define LOG_FATAL 1
 #define LOG_ERROR 2
 #define LOG_WARNING 3
@@ -24,6 +24,10 @@ typedef int SOCKET;
 #define LOG_VERBOSE 6
 
 namespace exqudens {
+
+  void SocketServer::setHost(const std::string& value) {
+    throw std::runtime_error(CALL_INFO + ": Not applicable!!!");
+  }
 
   void SocketServer::init() {
     try {

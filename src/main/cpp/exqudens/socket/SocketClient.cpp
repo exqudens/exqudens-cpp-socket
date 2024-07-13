@@ -15,7 +15,7 @@ typedef int SOCKET;
 #endif
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
-#define LOGGER_ID "SocketClient"
+#define LOGGER_ID "exqudens.SocketClient"
 #define LOG_FATAL 1
 #define LOG_ERROR 2
 #define LOG_WARNING 3
