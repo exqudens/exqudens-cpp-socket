@@ -23,6 +23,12 @@ typedef int SOCKET;
 
 namespace exqudens {
 
+  Socket::Socket(
+      const std::string& loggerId
+  ):
+      loggerId(loggerId)
+  {}
+
   void Socket::setPort(const unsigned short& value) {
     port = value;
   }
@@ -70,7 +76,7 @@ namespace exqudens {
 
       result = sendResult;
 
-      log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'send' success. bytes: '" + std::to_string(result) + "'");
+      log(__FILE__, __LINE__, __FUNCTION__, loggerId, LOG_INFO, "'send' success. bytes: '" + std::to_string(result) + "'");
 
       return result;
     } catch (...) {
@@ -94,10 +100,10 @@ namespace exqudens {
         errorMessage += "'";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }  else if (recvResult == 0) {
-        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, loggerId, LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
       } else {
         buffer.resize(recvResult);
-        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, loggerId, LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
       }
 
       return buffer;

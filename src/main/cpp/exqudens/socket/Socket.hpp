@@ -14,6 +14,7 @@ namespace exqudens {
 
       unsigned short port = 27015;
       std::string host = "localhost";
+      std::string loggerId = "exqudens.Socket";
       std::function<void(
           const std::string&,
           const size_t&,
@@ -27,6 +28,9 @@ namespace exqudens {
       std::atomic<size_t> transferSocket = SIZE_MAX;
 
     public:
+
+      EXQUDENS_SOCKET_INLINE
+      Socket(const std::string& loggerId);
 
       EXQUDENS_SOCKET_INLINE
       void setPort(const unsigned short& value) override;
@@ -81,9 +85,6 @@ namespace exqudens {
           const unsigned short& level,
           const std::string& message
       );
-
-      EXQUDENS_SOCKET_INLINE
-      virtual std::string getLoggerId() = 0;
 
   };
 

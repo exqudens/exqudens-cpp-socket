@@ -70,8 +70,7 @@ namespace exqudens {
         std::string errorMessage = "Not initialized. Call init(...) before usage";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
-      std::shared_ptr<ISocket> result = nullptr;
-      result = std::make_shared<SocketServer>();
+      std::shared_ptr<ISocket> result(new SocketServer());
       if (logFunction) {
         result->setLogFunction(logFunction);
       }
@@ -87,8 +86,7 @@ namespace exqudens {
         std::string errorMessage = "Not initialized. Call init(...) before usage";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
-      std::unique_ptr<ISocket> result = nullptr;
-      result = std::make_unique<SocketServer>();
+      std::unique_ptr<ISocket> result(new SocketServer());
       if (logFunction) {
         result->setLogFunction(logFunction);
       }
@@ -104,8 +102,7 @@ namespace exqudens {
         std::string errorMessage = "Not initialized. Call init(...) before usage";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
-      std::shared_ptr<ISocket> result = nullptr;
-      result = std::make_shared<SocketClient>();
+      std::shared_ptr<ISocket> result(new SocketClient());
       if (logFunction) {
         result->setLogFunction(logFunction);
       }
@@ -121,8 +118,7 @@ namespace exqudens {
         std::string errorMessage = "Not initialized. Call init(...) before usage";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
-      std::unique_ptr<ISocket> result = nullptr;
-      result = std::make_unique<SocketClient>();
+      std::unique_ptr<ISocket> result(new SocketClient("exqudens.SocketClient"));
       if (logFunction) {
         result->setLogFunction(logFunction);
       }

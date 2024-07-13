@@ -6,11 +6,13 @@ namespace exqudens {
 
   class EXQUDENS_SOCKET_EXPORT SocketClient : public Socket {
 
-    protected:
-
-      std::string host = "localhost";
-
     public:
+
+      EXQUDENS_SOCKET_INLINE
+      SocketClient(const std::string& loggerId);
+
+      EXQUDENS_SOCKET_INLINE
+      SocketClient();
 
       EXQUDENS_SOCKET_INLINE
       void setHost(const std::string& value) override;
@@ -23,10 +25,6 @@ namespace exqudens {
 
       EXQUDENS_SOCKET_INLINE
       ~SocketClient() noexcept override = default;
-
-    protected:
-
-      std::string getLoggerId() override;
 
   };
 

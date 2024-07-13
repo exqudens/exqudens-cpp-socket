@@ -9,6 +9,12 @@ namespace exqudens {
     public:
 
       EXQUDENS_SOCKET_INLINE
+      SocketServer(const std::string& loggerId);
+
+      EXQUDENS_SOCKET_INLINE
+      SocketServer();
+
+      EXQUDENS_SOCKET_INLINE
       void setHost(const std::string& value) override;
 
       EXQUDENS_SOCKET_INLINE
@@ -19,10 +25,6 @@ namespace exqudens {
 
       EXQUDENS_SOCKET_INLINE
       ~SocketServer() noexcept override = default;
-
-    protected:
-
-      std::string getLoggerId() override;
 
   };
 
