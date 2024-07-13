@@ -267,7 +267,7 @@ foreach(cmakePackageName IN LISTS "${PROJECT_NAME}_CMAKE_FIND_PACKAGE_NAMES")
     if("Easyloggingpp" STREQUAL "${cmakePackageName}")
         file(REMOVE "${CONAN_INSTALL_TEST_PREFIX}/Find${cmakePackageName}.cmake")
         list(APPEND NOT_FOUND_PACKAGE_NAMES "${cmakePackageName}")
-        find_package("${cmakePackageName}" "${${PROJECT_NAME}_CMAKE_PACKAGE_${cmakePackageName}_VERSION}" EXACT QUIET CONFIG)
+        find_package("${cmakePackageName}" "${${PROJECT_NAME}_CMAKE_PACKAGE_${cmakePackageName}_VERSION}" EXACT QUIET)
     elseif("nlohmann_json" STREQUAL "${cmakePackageName}")
         #file(REMOVE "${CONAN_INSTALL_TEST_PREFIX}/Find${cmakePackageName}.cmake")
         list(APPEND NOT_FOUND_PACKAGE_NAMES "${cmakePackageName}")
@@ -275,7 +275,7 @@ foreach(cmakePackageName IN LISTS "${PROJECT_NAME}_CMAKE_FIND_PACKAGE_NAMES")
     elseif("GTest" STREQUAL "${cmakePackageName}")
         file(REMOVE "${CONAN_INSTALL_TEST_PREFIX}/Find${cmakePackageName}.cmake")
         list(APPEND NOT_FOUND_PACKAGE_NAMES "${cmakePackageName}")
-        find_package("${cmakePackageName}" "${${PROJECT_NAME}_CMAKE_PACKAGE_${cmakePackageName}_VERSION}" EXACT QUIET CONFIG)
+        find_package("${cmakePackageName}" "${${PROJECT_NAME}_CMAKE_PACKAGE_${cmakePackageName}_VERSION}" EXACT QUIET)
     else()
         message("Ignore cmakePackageName: '${cmakePackageName}'")
     endif()
@@ -552,7 +552,7 @@ add_custom_target("conan-export"
             ${CONAN_OPTIONS}
             "${PROJECT_SOURCE_DIR}/conanfile.py"
             #"gitlab-group+gitlab-sub-group+${PROJECT_NAME}/stable"
-    DEPENDS "${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME}-config.cmake"
+    DEPENDS "cmake-install"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL
     VERBATIM
@@ -563,3 +563,27 @@ message(STATUS "all-targets:")
 foreach(t IN LISTS ALL_TARGETS)
     message(STATUS "${t}")
 endforeach()
+
+set("${PROJECT_NAME}_ADDITIONAL_CLEAN_FILES"
+    "${CMAKE_INSTALL_PREFIX}"
+)
+set_directory_properties(PROPERTIES
+    ADDITIONAL_CLEAN_FILES "${${PROJECT_NAME}_ADDITIONAL_CLEAN_FILES}"
+)
+
+# Generate vscode files if env var VSCODE value is "true"
+if("$ENV{VSCODE}")
+    include("${PROJECT_SOURCE_DIR}/cmake/vscode.cmake")
+    if("$ENV{VSCODE_SETTINGS}")
+        vscode(SETTINGS_FILE "${PROJECT_SOURCE_DIR}/.vscode/settings.json")
+    endif()
+    if("$ENV{VSCODE_C_CPP_PROPERTIES}")
+        vscode(C_CPP_PROPERTIES_FILE "${PROJECT_SOURCE_DIR}/.vscode/c_cpp_properties.json")
+    endif()
+    if("$ENV{VSCODE_TASKS}")
+        vscode(TASKS_FILE "${PROJECT_SOURCE_DIR}/.vscode/tasks.json")
+    endif()
+    if("$ENV{VSCODE_LAUNCH}")
+        vscode(LAUNCH_FILE "${PROJECT_SOURCE_DIR}/.vscode/launch.json")
+    endif()
+endif()
