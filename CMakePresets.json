@@ -18,12 +18,22 @@
     {
       "name": "windows",
       "hidden": true,
-      "cmakeExecutable": "cmake.exe"
+      "cmakeExecutable": "cmake.exe",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
     },
     {
       "name": "linux",
       "hidden": true,
-      "cmakeExecutable": "cmake"
+      "cmakeExecutable": "cmake",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
     },
     {
       "name": "ninja",

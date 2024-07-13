@@ -91,6 +91,9 @@ namespace exqudens {
           const std::string& message
       );
 
+      EXQUDENS_SOCKET_INLINE
+      virtual std::string getLoggerId() = 0;
+
   };
 
 }

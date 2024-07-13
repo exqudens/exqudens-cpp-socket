@@ -78,7 +78,7 @@ namespace exqudens {
 
       result = sendResult;
 
-      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'send' success. bytes: '" + std::to_string(result) + "'");
+      log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'send' success. bytes: '" + std::to_string(result) + "'");
 
       return result;
     } catch (...) {
@@ -102,10 +102,10 @@ namespace exqudens {
         errorMessage += "'";
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }  else if (recvResult == 0) {
-        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
       } else {
         buffer.resize(recvResult);
-        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'recv' success. bytes: '" + std::to_string(recvResult) + "'");
       }
 
       return buffer;
@@ -236,7 +236,7 @@ namespace exqudens {
             std::filesystem::path(file).filename().string(),
             line,
             function,
-            std::filesystem::path(id).filename().replace_extension().string(),
+            id,
             level,
             message
         );

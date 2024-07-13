@@ -17,6 +17,10 @@ namespace exqudens {
       EXQUDENS_SOCKET_INLINE
       ~SocketServer() noexcept override = default;
 
+    protected:
+
+      std::string getLoggerId() override;
+
   };
 
 }

@@ -15,6 +15,7 @@ typedef int SOCKET;
 #include "exqudens/socket/SocketServer.hpp"
 
 #define CALL_INFO std::string(__FUNCTION__) + "(" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + ")"
+#define LOGGER_ID "SocketServer"
 #define LOG_FATAL 1
 #define LOG_ERROR 2
 #define LOG_WARNING 3
@@ -52,7 +53,7 @@ namespace exqudens {
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'getaddrinfo' success.");
+      log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'getaddrinfo' success.");
 
       socketResult = openSocket(addressInfo->ai_family, addressInfo->ai_socktype, addressInfo->ai_protocol);
 
@@ -68,7 +69,7 @@ namespace exqudens {
 
       listenSocket.store(socketResult.first);
 
-      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'socket' success. listenSocket: '" + std::to_string(listenSocket.load()) + "'");
+      log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'socket' success. listenSocket: '" + std::to_string(listenSocket.load()) + "'");
 
       bindResult = bind((SOCKET) listenSocket.load(), addressInfo->ai_addr, (int) addressInfo->ai_addrlen);
 
@@ -86,7 +87,7 @@ namespace exqudens {
 
       freeaddrinfo(addressInfo);
 
-      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'bind' success.");
+      log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'bind' success.");
 
       listenResult = listen((SOCKET) listenSocket.load(), SOMAXCONN);
 
@@ -101,7 +102,7 @@ namespace exqudens {
         throw std::runtime_error(CALL_INFO + ": " + errorMessage);
       }
 
-      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'listen' success.");
+      log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'listen' success.");
 
       acceptResult = acceptSocket((SOCKET) listenSocket.load());
 
@@ -125,7 +126,7 @@ namespace exqudens {
       listenSocket.store(SIZE_MAX);
       closeSocket(tmpListenSocket);
 
-      log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'accept' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'");
+      log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'accept' success. transferSocket: '" + std::to_string(transferSocket.load()) + "'");
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
     }
@@ -148,10 +149,10 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           //throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'shutdown' warning " + errorMessage);
+          log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'shutdown' warning " + errorMessage);
         }
 
-        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'shutdown' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'shutdown' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'");
 
         int closeSocketResult = closeSocket(tmpTransferSocket);
 
@@ -163,10 +164,10 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          //log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'close' warning " + errorMessage);
+          //log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'close' warning " + errorMessage);
         }
 
-        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'closesocket' success. transferSocket: '" + std::to_string(tmpTransferSocket) + "'");
       }
       if (listenSocket.load() != SIZE_MAX) {
         size_t tmpListenSocket = listenSocket.load();
@@ -183,10 +184,10 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           //throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'shutdown' warning " + errorMessage);
+          log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'shutdown' warning " + errorMessage);
         }
 
-        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'shutdown' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'shutdown' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
 
         int closeSocketResult = closeSocket(tmpListenSocket);
 
@@ -198,11 +199,19 @@ namespace exqudens {
           errorMessage += std::to_string(lastError);
           errorMessage += "'";
           throw std::runtime_error(CALL_INFO + ": " + errorMessage);
-          //log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'close' warning " + errorMessage);
+          //log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'close' warning " + errorMessage);
         }
 
-        log(__FILE__, __LINE__, __FUNCTION__, __FILE__, LOG_INFO, "'closesocket' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
+        log(__FILE__, __LINE__, __FUNCTION__, getLoggerId(), LOG_INFO, "'closesocket' success. listenSocket: '" + std::to_string(tmpListenSocket) + "'");
       }
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error(CALL_INFO));
+    }
+  }
+
+  std::string SocketServer::getLoggerId() {
+    try {
+      return std::string(LOGGER_ID);
     } catch (...) {
       std::throw_with_nested(std::runtime_error(CALL_INFO));
     }
@@ -211,6 +220,7 @@ namespace exqudens {
 }
 
 #undef CALL_INFO
+#undef LOGGER_ID
 #undef LOG_FATAL
 #undef LOG_ERROR
 #undef LOG_WARNING
